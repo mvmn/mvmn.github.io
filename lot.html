@@ -1,0 +1,389 @@
+<html>
+<meta name="viewport" content="width=400">
+<script>
+function getUrlParameters(parameter, staticURL, decode){
+	/*
+	Function: getUrlParameters
+	Description: Get the value of URL parameters either from 
+				 current URL or static URL
+	Author: Tirumal
+	URL: www.code-tricks.com
+	*/
+	var currLocation = (staticURL.length)? staticURL : window.location.search;
+	var returnBool = true;
+	if(currLocation.split("?").length>1) {
+		var parArr = currLocation.split("?")[1].split("&");
+		for(var i = 0; i < parArr.length; i++){
+			parr = parArr[i].split("=");
+			if(parr[0] == parameter){
+					return (decode) ? decodeURIComponent(parr[1]) : parr[1];
+			}else{
+				returnBool = false;            
+			}
+		}
+	}   
+	if(!returnBool) return false;  
+}
+
+function escapeHTML(html) {
+	var htmlEscapeElem = document.createElement('textarea');
+    htmlEscapeElem.innerHTML = html;
+    return htmlEscapeElem.innerHTML;
+}
+
+function unescapeHTML(html) {
+	var htmlEscapeElem = document.createElement('textarea');
+    htmlEscapeElem.innerHTML = html;
+    return htmlEscapeElem.value;
+}
+
+var itemsSeparator = ';;';
+var itemsParam=getUrlParameters('items','',true);
+if(itemsParam===undefined) { itemsParam=""; }
+
+var items=[];
+var enabledItems=[];
+var currentItemIndex=-1;
+
+if(itemsParam.length>0) {
+	items=itemsParam.split(itemsSeparator);
+	items.reverse();
+}
+for(index in items) {
+	enabledItems.push(new Number(index).toFixed());
+}
+
+function updateUrl() {
+	var escapedItems = new Array();
+	for(index in items) {
+		escapedItems.push(encodeURIComponent(items[index]));		
+	}
+	escapedItems.reverse();	
+	history.pushState("", updateTitle(), ""+window.location.pathname+"?items="+escapedItems.join(itemsSeparator));
+}
+
+function updateTitle() {
+	var title = "Lot: "+items.join(",");
+	document.title = title;
+	return title;
+}
+
+function updateItemsCount() {
+	var countContainer = document.getElementById("allItemsCount");
+	countContainer.innerHTML=items.length;
+	updateEnabledItemsCount();
+}
+
+function updateEnabledItemsCount() {
+	var countContainer = document.getElementById("enabledItemsCount");
+	countContainer.innerHTML=enabledItems.length;
+}
+
+function deleteItem(itemIndex) {
+	itemIndex=new Number(itemIndex);
+	var itemText = items[itemIndex];
+	if(confirm("Delete item '"+itemText+"'?")) {
+		var itemContainer = document.getElementById("item"+itemIndex);
+		itemContainer.parentNode.removeChild(itemContainer);
+		items.splice(itemIndex, 1)
+		var indexInEnabled = enabledItems.indexOf(new Number(itemIndex).toFixed());
+		if(indexInEnabled>=0) {
+			enabledItems.splice(indexInEnabled, 1); 
+		}
+		for(var index=0+itemIndex+1; index<=items.length; index++) {
+			document.getElementById("item"+index).id = "item"+(index-1);
+			var indexInEnabled = enabledItems.indexOf(new Number(index).toFixed());
+			if(indexInEnabled>=0) {
+				enabledItems.splice(indexInEnabled, 1);
+				enabledItems.push(new Number(index-1).toFixed());
+			}
+		}
+		clearItemDisplay();
+		updateItemsCount();
+		updateUrl();
+	}
+}
+
+var jsCodeForObtainingItemId="this.parentNode.id.replace('item','')";
+function generateItemContent(itemIndex) {
+	var result = '<div id="item'+itemIndex+'" class="item">';
+	result+='<div class="button btnToggleEnabled" onclick="javascript:toggleItemEnabled('+jsCodeForObtainingItemId+')">V</div>';
+	result+='<div class="itemContent"><div>'+escapeHTML(items[itemIndex])+'</div></div>';
+	result+='<div class="button" onclick="javascript:deleteItem('+jsCodeForObtainingItemId+')">delete</div>';
+	result+='</div>';
+	return result;
+}
+
+function addItem(itemText) {
+	if(itemText===undefined) {
+		itemText = window.prompt('New item text','');
+	} else {
+		itemText = itemText;
+	}
+	if(itemText) {
+		var splits = itemText.split(";;");
+		for(splitIndex in splits) {
+			items.push(splits[splitIndex]);
+			enabledItems.push(new Number(items.length-1).toFixed());
+			var itemsContainer = document.getElementById("allItems");
+			itemsContainer.innerHTML=generateItemContent(items.length-1)+itemsContainer.innerHTML;
+			updateItemsCount();
+			updateUrl();
+		}
+	}
+}
+
+function deleteAllItems() {
+	if(window.confirm("Are you sure you want to delete ALL items?")) {
+		items = [];
+		enabledItems = [];
+		updateItemsCount();		
+		updateUrl();
+		document.getElementById('allItems').innerHTML='';
+		clearItemDisplay();
+	}
+}
+
+function renderAllItems() {
+	var itemsContainer = document.getElementById("allItems");
+	var content = [];
+	for(index in items) {
+		content.push(generateItemContent(index));
+	}
+	content.reverse();
+	itemsContainer.innerHTML = content.join("");
+	updateItemsCount();
+	updateTitle();
+}
+
+function clearItemDisplay() {
+	document.getElementById('currentItem').innerHTML='';
+	document.getElementById('currentItemButtons').innerHTML='';
+}
+
+var rgxClassToggleButton = new RegExp("\\bbtnToggleEnabled\\b");
+var rgxClassButton = new RegExp("\\button\\b");
+var rgxClassButtonAlerted = new RegExp("\\bbuttonAlerted\\b");
+function toggleItemEnabled(itemIndex, toggleButtonElement, tbeEnabledText, tbeDisabledText) {
+	var makeEnabled = false;
+	var indexInEnabled = enabledItems.indexOf(new Number(itemIndex).toFixed());
+	if(indexInEnabled>=0) {
+		enabledItems.splice(indexInEnabled, 1);
+		makeEnabled=false;
+	} else {
+		enabledItems.push(new Number(itemIndex).toFixed());
+		makeEnabled=true;
+	}
+	var itemEnableButton=null;
+	var itemContainerNodes = document.getElementById("item"+itemIndex).childNodes;
+	for(tidx in itemContainerNodes) {
+		if(itemContainerNodes[tidx].className!==undefined && rgxClassToggleButton.test(itemContainerNodes[tidx].className)) {
+			itemEnableButton = itemContainerNodes[tidx];
+			break;
+		}
+	}
+	if(itemEnableButton!=null) {
+		var classText = itemEnableButton.className;
+		if(makeEnabled) {
+			classText = classText.replace(rgxClassButtonAlerted,"").replace("  ", " ")+" button";
+		} else {
+			classText = classText.replace(rgxClassButton,"").replace("  ", " ")+" buttonAlerted";
+		}
+		itemEnableButton.className = classText;	
+	}
+	
+	if(currentItemIndex==itemIndex) {	
+		var btnToggleCurrentItemEnabled = document.getElementById('btnToggleCurrentItemEnabled');
+		if(btnToggleCurrentItemEnabled!==undefined) {
+			var classText = btnToggleCurrentItemEnabled.className;
+			if(makeEnabled) {
+				classText = classText.replace(rgxClassButton,"").replace("  ", " ")+" buttonAlerted";
+				btnToggleCurrentItemEnabled.innerHTML='disable';
+			} else {
+				classText = classText.replace(rgxClassButtonAlerted,"").replace("  ", " ")+" button";
+				btnToggleCurrentItemEnabled.innerHTML='enable';
+			}
+			btnToggleCurrentItemEnabled.className = classText;
+		}
+	}
+	updateEnabledItemsCount();
+}
+
+function nextItemDisplay() {
+	if(enabledItems.length>0) {
+		var itemIndex = Math.floor((Math.random() * enabledItems.length) + 1)-1;
+		itemIndex=enabledItems[new Number(itemIndex).toFixed()];
+		currentItemIndex = itemIndex;
+		var content='<div class="currentItem">'+escapeHTML(items[itemIndex])+'</div>';
+		document.getElementById('currentItem').innerHTML=content;
+		document.getElementById('currentItemButtons').innerHTML=
+			'<div class="buttonAlerted" id="btnToggleCurrentItemEnabled" onclick="javascript:toggleItemEnabled('+itemIndex+')">disable</div>';
+	} else {
+		clearItemDisplay();
+	}
+	
+}
+
+var rgxClassHidden = new RegExp("\\bhidden\\b");
+function toggleHide(toggleElementId, statusElementId, statusTextVisible, statusTextHidden) {
+	var element = document.getElementById(toggleElementId);
+	var isHidden = false;
+	if(element !== undefined) {
+		var classText = element.className;
+		if(classText === undefined) {
+			classText = "";
+		}
+		if(rgxClassHidden.test(classText)) {
+			classText = classText.replace(rgxClassHidden,"").replace("  ", " ");
+		} else {
+			classText+=" hidden";
+			isHidden = true;
+		}
+		element.className=classText;
+	}
+	if(statusElementId !==undefined && statusTextVisible !== undefined) {
+		var statusElement = document.getElementById(statusElementId);
+		if( statusElement!== undefined) {
+			if(statusTextHidden===undefined) { statusTextHidden = ""; }
+			statusElement.innerHTML = isHidden? statusTextHidden : statusTextVisible;
+		}
+	}
+}
+
+window.onload=function() {
+	renderAllItems();
+}
+</script>
+<style>
+body {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-weight: 300;
+	font-size: 12pt;
+}
+
+#mainContainer {
+	width: 100%;
+	background-color: #FFFFFF;
+	padding: 10pt;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.itemsSection {
+	box-sizing: border-box;
+	width: 100%;
+	background-color: #EEEEEE;
+	margin-bottom: 10pt;
+	padding-bottom: 10pt;
+}
+
+.itemsSectionContent {
+	box-sizing: border-box;
+	width: 100%;
+	padding-left: 10pt;
+	padding-right: 10pt;
+	text-align: center;
+}
+
+.itemsSectionHeading {
+	width: 100%;
+	overflow: auto;
+	box-sizing: border-box;
+	font-weight: bold;
+	background-color: #E0E0E0;
+}
+
+.button {
+	background-color: #BBFFBB;
+	cursor:hand;
+}
+
+.buttonAlerted {
+	background-color: #FFBBBB;
+	cursor:hand;
+}
+
+.item, .sectionElement { 
+	width: 100%;	
+	margin-top: 10pt;
+	margin-bottom: 10pt;
+	box-sizing: border-box;
+}
+
+.item {
+	background-color: #BBBBFF;
+	overflow: auto;
+	text-align: left;
+}
+
+.item > div, .sectionElement > div {
+	padding: 10pt;
+	overflow: auto;
+}
+
+.item > div {
+	display: table-cell;
+}
+
+.itemContent {
+	width: auto;
+	overflow: auto;	
+	height: 14pt;
+	width: 100%;
+}
+
+.itemContent div {
+	max-height: 72pt;
+	overflow: auto;
+}
+
+.itemsSectionHeading div.separator, .item div.separator {
+	padding: 5pt;
+}
+
+.itemsSectionHeading div {
+	padding: 5pt 10pt 5pt 10pt;
+}
+
+.currentItem {
+	font-size: 32pt;
+	text-align: center;
+	padding: 30pt;
+	overflow: auto;
+}
+
+.currentItemButtons {
+	text-align: center;
+}
+
+.floatLeft { float: left; }
+.floatRight { float: right; }
+.hidden { display: none; }
+</style>
+<body>
+	<div id="mainContainer">
+		<div class="itemsSection">
+			<div class="itemsSectionHeading">
+				<div class="floatLeft">All items (<span id="enabledItemsCount">0</span>/<span id="allItemsCount">0</span>)</div>
+				<div class="floatLeft button" id="btnAddItem" onclick="javascript:addItem()">+</div>
+				<div class="floatLeft separator"></div>
+				<div class="floatLeft button" id="btnDeleteAll" onclick="javascript:deleteAllItems()">delete all</div>				
+				<div class="floatRight button" id="btnToggleCollapse" onclick="javascript:toggleHide('allItems','btnToggleCollapse','hide','show')">show</div>				
+			</div>
+			<div class="itemsSectionContent hidden" id="allItems">
+			</div>
+		</div>
+		<div class="itemsSection">
+			<div class="itemsSectionHeading">
+				<div class="floatLeft button" id="btnAddItem" onclick="javascript:nextItemDisplay()">draw lot</div>
+				<div class="floatRight button" id="btnAddItem" onclick="javascript:clearItemDisplay()">clear</div>
+			</div>
+			<div class="itemsSectionContent" id="currentItem">
+			</div>
+			<div class="itemsSectionContent sectionElement" id="currentItemButtons">
+			</div>
+		</div>
+	</div>
+</body>
+</html>

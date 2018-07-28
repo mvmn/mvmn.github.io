@@ -1,0 +1,260 @@
+<html>
+	<head>
+		<title>Mafia game helper</title>
+		<meta name="viewport" content="width=400">
+		<script 
+				src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 
+				integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E=" 
+				crossorigin="anonymous"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/ractive/1.0.0-build-176/ractive.min.js"></script>
+		<script>
+			var eventRegistrations = {};
+			function evbus(event, args) {
+			   var handlers = eventRegistrations[event];
+			   if(handlers) {
+				 for(var i in handlers) {
+				   handlers[i].apply(null, args);
+				 }
+			   }
+			   return true;
+			}
+			
+			function saveState() {
+				localStorage.setItem("gameData", JSON.stringify(gameData));
+			}
+			
+			eventRegistrations.addplayer = [
+				() => {
+					var name = prompt("Enter name");
+					if(name && name.length > 0) {
+						gameData.players.push({name: name, role:"Civil"});
+						saveState();
+						reRender();
+					}
+				}
+			];
+			
+			eventRegistrations.addrole = [
+				() => {
+					var name = prompt("Enter role");
+					if(name && name.length > 0) {
+						addRoleIfNotExists(name);
+						saveState();
+						reRender();
+					}
+				}
+			];
+			
+			eventRegistrations.delplayer = [
+				(name) => {
+					if(confirm("Delete player "+name+"?")) {
+						var playersToRetain = [];
+						for(var i in gameData.players) {
+							var player = gameData.players[i];
+							if(player.name !== name) {
+								playersToRetain.push(player);
+							}
+						}
+						gameData.players = playersToRetain;
+						saveState();
+						reRender();
+					}
+				}
+			];
+			
+			eventRegistrations.newround = [
+				() => {
+					if(confirm("Reset data for a new round?")) {
+						setPlayerPropConditional('role', () => { return true }, 'Civil');
+						setPlayerPropConditional('hidden', () => { return true }, false);
+						setPlayerPropConditional('killed_by_mafia', () => { return true }, false);
+						setPlayerPropConditional('killed_by_maniac', () => { return true }, false);
+						setPlayerPropConditional('muted', () => { return true }, false);
+						saveState();
+						reRender();
+					}
+				}
+			];
+			
+			eventRegistrations.delrole = [
+				(role) => {
+					if(role !== 'Civil') {
+						if(confirm("Delete role "+role+"?")) {
+							var idx = gameData.roles.indexOf(role);
+							if(idx>=0) {
+								gameData.roles.splice(idx, 1);
+								setPlayerPropConditional('role', (player) => { return player.role === role }, 'Civil');
+								saveState();
+								reRender();							
+							}
+						}
+					}
+				}
+			];
+			
+			function setPlayerPropConditional(property, condition, value) {
+				for(var i in gameData.players) {
+					var player = gameData.players[i];
+					if(condition(player)) {
+						player[property] = value;
+					}
+				}
+			}
+			
+			function setPlayerPropByName(name, property, value) {
+				setPlayerPropConditional(property, (player) => { return player.name === name }, value);
+			}
+			
+			eventRegistrations.setplayerprop = [
+				(playerName, propName, value) => {
+					setPlayerPropByName(playerName, propName, value);
+					saveState();
+					reRender();
+				}
+			]
+			
+			function reRender() {
+				var ractive = new Ractive({
+					template: $("#playerDataElement").html(),
+					data: {players:gameData.players, roles: gameData.roles, showHidden: !!gameData.showHidden}
+				}).render("#gameContent")
+			}
+			
+			function setShowHidden(val) {
+				gameData.showHidden = !!val;
+				saveState();
+				reRender();
+			}
+			
+			function hideKilled() {
+				setPlayerPropConditional('hidden', (player) => { return player.killed_by_mafia || player.killed_by_maniac }, true);
+				saveState();
+				reRender();
+			}
+			
+			function addRoleIfNotExists(role) {
+				if(gameData.roles.indexOf(role) < 0) {
+					gameData.roles.push(role);
+				}
+			}
+			
+			var gameData = {};
+			// Init
+			$(document).ready(function() {
+				var gameDataJson = localStorage.getItem("gameData");
+				if(!gameDataJson) {
+					gameData.players = [];
+				} else {
+					gameData = JSON.parse(gameDataJson);
+				}
+				if(!gameData.roles) {
+					gameData.roles = ["Civil", "Mafia", "Sheriff", "Doctor", "Lover", "Maniac"];					
+				}
+			
+				for(var i in gameData.players) {
+					var playerInfo = gameData.players[i];
+					addRoleIfNotExists(playerInfo.role);
+				}
+				
+				$("#showHidden").attr("checked", !!gameData.showHidden?"checked":null);
+			
+				saveState();
+				reRender();
+			});
+		</script>
+		<style>
+			body {
+				font-family: Sans-serif;
+			}
+			.mainTable, .mainTable tr, .mainTable td {
+				border: solid 1px #EEEEEE;
+				border-collapse: collapse;
+				padding: 0;
+				margin: 0;
+				border-spacing: 0;
+			}
+			
+			thead {
+				background-color: #EEEEEE;
+				font-weight: bold;
+				font-size: 80%;
+			}
+		</style>
+		<script id="playerDataElement" type="text/x-jquery-tmpl">
+			<table class="mainTable" style="width: 100%; border: 0">
+			<thead>
+				<tr>
+					<td>name</td><td>role</td><td>killed<sup>by</sup></td><td>mute</td><td>&nbsp;</td>
+				</tr>
+			</thead>
+			<tbody>
+			{{#each players as player}}
+			{{#if showHidden || !player.hidden}}
+        	<tr>
+        		<td>{{player.name}}</td>
+				<td>
+					<select onchange="evbus('setplayerprop', ['{{player.name}}', 'role', this.options[this.selectedIndex].value])">
+						{{#each roles as role}}
+							<option {{#if player.role == role}} selected="selected" {{/if}} value="{{role}}">{{role}}</option>
+						{{/each}}
+					</select>
+					<button onclick="evbus('setplayerprop', ['{{player.name}}', 'role', 'Mafia'])"><small>m</small></button>
+				</td>
+				<td>
+					<input type="checkbox" 
+							{{#if player.killed_by_mafia}} checked="checked" {{/if}}
+							onclick="evbus('setplayerprop', ['{{player.name}}', 'killed_by_mafia', this.checked])" />
+					<small>mafia</small>
+					<br/>
+					<input type="checkbox" 
+							{{#if player.killed_by_maniac}} checked="checked" {{/if}}
+							onclick="evbus('setplayerprop', ['{{player.name}}', 'killed_by_maniac', this.checked])" />
+					<small>maniac</small>
+				</td>
+				<td>
+					<input type="checkbox" 
+							{{#if player.muted}} checked="checked" {{/if}}
+							onclick="evbus('setplayerprop', ['{{player.name}}', 'muted', this.checked])" />
+				</td>
+				<td>
+					{{#if !player.hidden}}
+						<button onclick="evbus('setplayerprop', ['{{player.name}}', 'hidden', true])"><small>hide</small></button>
+					{{else}}
+						<button onclick="evbus('setplayerprop', ['{{player.name}}', 'hidden', false])"><small>show</small></button>
+					{{/if}}
+					<br/>
+					<button onclick="evbus('delplayer', ['{{player.name}}'])"><small>X</small></button>
+        		</td>
+        	</tr>
+        	{{/if}}
+        	{{/each}}
+        	</tbody>
+        	</table>
+        	<hr>
+        	<div>
+        		<b>Roles:</b>
+				{{#each roles as role}}
+					<div>
+						- 
+					{{#if role !== 'Civil'}}
+						<button onclick="evbus('delrole', ['{{role}}'])"><small>x</small></button>
+					{{/if}}
+					{{role}}
+					</div>
+				{{/each}}
+        	</div>
+		</script>		
+	</head>
+	<body>
+		<div>
+			<button onclick="evbus('addplayer')">+ player</button>
+			<button onclick="evbus('addrole')">+ role</button>
+			<button onclick="evbus('newround')">Reset round</button>
+		</div>
+		<div>
+			<input id="showHidden" type="checkbox" checked="checked" onclick="setShowHidden(this.checked)"><small>Show hidden</small></input>
+			<button onclick="hideKilled()">Hide killed</button>
+		</div>
+		<div id="gameContent"></div>
+	</body>
+</html>

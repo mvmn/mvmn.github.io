@@ -178,8 +178,9 @@
 		</style>
 		<script>
 			class MultistateCheck {
-	            constructor(parentElement, circular, callback, state) {
+	            constructor(parentElement, fivestate, circular, callback, state) {
 					this.parentElement = parentElement;
+					this.fivestate = fivestate;
 	                this.state = state && !Number.isNaN(parseInt(state)) ? parseInt(state) : 0;
 	                this.container = document.createElement('div');
 	                this.container.classList.add('circle-container');
@@ -200,7 +201,7 @@
 	                	this.circle.setAttribute("r", "4");
 					} else {
 	                	this.circle.setAttribute("height", "8");
-	                	this.circle.setAttribute("width", "8");		
+	                	this.circle.setAttribute("width", "8");
 					}
 	                this.circle.setAttribute("fill", "none");
         
@@ -215,8 +216,8 @@
 	                	this.filledCircle.setAttribute("r", "4");
 					} else {
 	                	this.filledCircle.setAttribute("height", "8");
-	                	this.filledCircle.setAttribute("width", "8");				
-					}					
+	                	this.filledCircle.setAttribute("width", "8");
+					}
 	                this.filledCircle.setAttribute("fill", "white");
 	                this.filledCircle.classList.add("hidden");
         
@@ -237,11 +238,18 @@
 	            }
 
 	            toggleState() {
-	                this.updateState((this.state + 1) % 5);
+					if(this.fivestate) {
+	                	this.updateState((this.state + 1) % 5);
+					} else {
+						this.updateState(this.state == 0? 4 : 0);
+					}
 	            }
 
 	            updateState(newState) {
 					this.state = newState && !Number.isNaN(parseInt(newState)) || 0 === newState ? parseInt(newState) : this.state;
+					if(!this.fivestate && this.state > 0) {
+						this.state = 4;
+					}
 	                this.line1.classList.toggle("hidden", this.state < 1);
 	                this.line2.classList.toggle("hidden", this.state < 2);
 	                this.line3.classList.toggle("hidden", this.state < 3);
@@ -279,12 +287,12 @@
 				var optionsHTML = optionsHTMLs.join("\n");
 				
 				return `<div class="attrdiv"><select id="attr_${attrs.id}" class="charprop">${optionsHTML}</select> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
-			}			
+			}
 			templates['circle5'] = function(attrs) {
-				return `<span id="attr_${attrs.id}_vals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span>`;				
+				return `<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span>`;
 			}
 			templates['square5'] = function(attrs) {
-				return `<span id="attr_${attrs.id}_vals"><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span></span>`;				
+				return `<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}"><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span></span>`;
 			}
 			templates['prop_field'] = function(attrs) {
 				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="text" class="charprop" /></div>`;
@@ -363,13 +371,13 @@
 				for(var i = 0; i < msCircles.length; i++) {
 					var elem = msCircles[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
 					multiselects[lsKey] = ms;
 				}
 				for(var i = 0; i < msSquares.length; i++) {
 					var elem = msSquares[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
 					multiselects[lsKey] = ms;
 				}
 				
@@ -452,7 +460,7 @@
 				});
 				
 				$("#btn_clear").on("click", () => {
-					if (window.confirm("Are you sure?")) {						
+					if (window.confirm("Are you sure?")) {
 						for(var i=0; i<localStorage.length; i++) {
 							var key = localStorage.key(i);
 							if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
@@ -485,8 +493,8 @@
  		  <div class="column rightalign">
 			  <div><span id="theme-toggle" data-i18n="theme_toggle">☀️</span></div>
 			  <div>
-				  <button id="btn_clear">Clear</button> 
-				  <button id="btn_export">Export</button> 
+				  <button id="btn_clear">Clear</button>
+				  <button id="btn_export">Export</button>
 				  <button id="btn_import">Import</button>
 			  </div>
 			  <input type="file" id="fileInput" style="display: none;" />
@@ -634,20 +642,20 @@
 		  <div class="column">
 			 <div class="fullwidth center h3">Health</div>
 			 <div class="fullwidth center">
-				   <span><tpl t="square5" id="health1" /></span>
-				   <span><tpl t="square5" id="health2" /></span>
-				   <span><tpl t="square5" id="health3" /></span>
+				   <span><tpl t="square5" id="health1" fivestate="true" /></span>
+				   <span><tpl t="square5" id="health2" fivestate="true" /></span>
+				   <span><tpl t="square5" id="health3" fivestate="true" /></span>
 			 </div>
 			 <div class="fullwidth center h3">Willpower</div>
 			 <div class="fullwidth center">
-				   <span><tpl t="square5" id="wp1" /></span>
-				   <span><tpl t="square5" id="wp2" /></span>
-				   <span><tpl t="square5" id="wp3" /></span>
+				   <span><tpl t="square5" id="wp1" fivestate="true" /></span>
+				   <span><tpl t="square5" id="wp2" fivestate="true" /></span>
+				   <span><tpl t="square5" id="wp3" fivestate="true" /></span>
 			 </div>
 			 <div class="fullwidth center h3">Humanity</div>
 			 <div class="fullwidth center">
-				   <span><tpl t="square5" id="humanity1" /></span>
-				   <span><tpl t="square5" id="humanity2" /></span>
+				   <span><tpl t="square5" id="humanity1" fivestate="true" /></span>
+				   <span><tpl t="square5" id="humanity2" fivestate="true" /></span>
 			 </div>
 			 <div class="fullwidth center h3">Hunger</div>
 			 <div class="fullwidth center">

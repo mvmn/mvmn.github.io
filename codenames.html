@@ -1,0 +1,80 @@
+<html>
+	<head>
+		<title>CodeNames tabletop game task generator</title>
+		<style>
+			td { width: 32px; height: 32px; text-align: center; color: white; }
+			.cell_red { background-color: red; }
+			.cell_blue { background-color: #88CCFF; }
+			.cell_black { background-color: black; }
+			.cell_yellow { background-color: yellow; }
+			table { 
+				background-color: black; 
+				border-spacing: 2px;
+				border-collapse: separate;
+				border: solid 4px gray;
+			}
+		</style>
+		<script>
+			function generate() {
+				var x = document.getElementById("fieldSizeX").value;
+				var y = document.getElementById("fieldSizeY").value;
+				var red = document.getElementById("cardsRed").value;
+				var blue = document.getElementById("cardsBlue").value;
+				var black = document.getElementById("cardsBlack").value;
+				var yellow = x*y - red - blue - black;
+				
+				var choices = [];
+				for(var i=0;i<red;i++) { choices.push("red"); }
+				for(var i=0;i<blue;i++) { choices.push("blue"); }
+				for(var i=0;i<black;i++) { choices.push("black"); }
+				for(var i=0;i<yellow;i++) { choices.push("yellow"); }
+
+				var field = [];
+				var num = choices.length;
+				for(var i=0; i<num; i++) {
+					var cell = popRandomItem(choices);
+					field.push(cell);
+				}
+				
+				var contents = []
+				for(var i=0; i<x; i++) {
+					contents.push("<tr>");
+					for(var j=0; j<y; j++) {
+						var cell = field[i+j*x];
+						contents.push("<td class='cell_");	
+						contents.push(cell);
+						contents.push("'>");
+						if(cell === 'black') {
+							contents.push('&#x274c;');
+						} else if(cell === 'blue') {
+							contents.push('&#x25EF;');							
+						}  else if(cell === 'red') {
+							contents.push('&#x2662;');							
+						}
+						console.log(cell);
+						contents.push("</td>");
+					}
+					contents.push("</tr>\n");
+				}
+				var table = document.getElementById('mainTable');
+				table.innerHTML = contents.join("");
+			}
+			
+			function popRandomItem(items) {
+			    return items.splice(Math.floor(Math.random() * items.length), 1)[0];
+			}			
+		</script>
+	</head>
+	<body>
+		Field size <input type="text" value="5" id="fieldSizeX" size="2" />x<input type="text" value="5" id="fieldSizeY" size="2" /><br/>
+		Red cards <input type="text" value="9" size="2" id="cardsRed" /><br/>
+		Blue cards <input type="text" value="8" size="2" id="cardsBlue" /><br/>
+		Black cards <input type="text" value="1" size="2" id="cardsBlack" /><br/>
+		<br/>
+		<input type="button" value="generate" onclick="javascript:generate()">
+		<br/>
+		<br/>
+		<table id="mainTable"></table>
+		<script>generate()</script>
+	</body>
+</html>

@@ -1,0 +1,320 @@
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>MVMn's dice roller</title>
+<!-- source: https://github.com/mvmn/dice -->
+<script>
+	function getUrlParameters(parameter, staticURL, decode){
+		/*
+		Function: getUrlParameters
+		Description: Get the value of URL parameters either from 
+					 current URL or static URL
+		Author: Tirumal
+		URL: www.code-tricks.com
+		*/
+		var currLocation = (staticURL && staticURL.length)? staticURL : window.location.search;
+		var returnBool = true;
+		if(currLocation.split("?").length>1) {
+			var parArr = currLocation.split("?")[1].split("&");
+			for(var i = 0; i < parArr.length; i++){
+				parr = parArr[i].split("=");
+				if(parr[0] == parameter){
+						return (decode) ? decodeURIComponent(parr[1]) : parr[1];
+				}else{
+					returnBool = false;            
+				}
+			}
+		}   
+		if(!returnBool) return false;  
+	}
+	
+	function getRandomInt(min, max) {
+		const minCeiled = Math.ceil(min);
+		const maxFloored = Math.floor(max);
+		return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); // The maximum is exclusive and the minimum is inclusive
+	}
+
+	var currentResult = 0;
+	var currentNumbers = [];
+	
+	function next() {
+		resetCurrent();
+		document.getElementById("resultsContainer").innerHTML = '<hr/>' + document.getElementById("resultsContainer").innerHTML
+	}
+	
+	function clearResults() {
+		resetCurrent();
+		document.getElementById("resultsContainer").innerHTML = '';
+	}
+	
+	function resetCurrent() {
+		currentResult = 0;
+		currentNumbers = [];
+	}
+	
+	function roll(number) {
+		var result = getRandomInt(1, number+1);
+		handleRollResult('D'+number, result);
+	}
+		
+	function handleRollResult(dieName, result) {
+		currentNumbers.push(result);
+		currentResult+=result;
+		var resultsContainer = document.getElementById("resultsContainer");
+		
+		const template = document.createElement('template');
+		template.innerHTML = '<div><span class="diceType die_' + window.currentColorClass + '">'+dieName+'</span>: <span class="rollResult">'+(currentNumbers.length>1 && !dieName.startsWith('-' )?'+':'')+result+'</span> <span class="eqSign">=</span> <span class="totalSum">'+currentResult+'</span></div>';
+		
+		resultsContainer.prepend(template.content.firstChild);
+	}
+	
+	function adjust(adjustmentValue) {
+		handleRollResult('' + (adjustmentValue >= 0 ? '+' : '' ) + adjustmentValue, adjustmentValue);
+	}
+	
+	function addDie() {
+		var dieVal = '';		
+		while(!isIntAboveZero(dieVal)) {
+			dieVal = prompt('Enter die value (positive integer)');
+			if(dieVal == null) {
+				return;
+			}
+		}
+		doAddDie(dieVal);
+	}
+	
+	function doAddDie(dieVal) {
+		document.getElementById('diceContainer').innerHTML += '<div onclick="roll('+dieVal+')" class="die_to_roll die_' + window.currentColorClass + '">D'+dieVal+'</div>';
+		
+		var param = getUrlParameters("dice");
+		if(!param) {
+			param = '';
+		}
+		var diceVal = param.split(",").filter(v => isInt(v)).map(v => parseInt(v));
+		if (diceVal.indexOf(parseInt(dieVal))<0) {
+			diceVal.push(parseInt(dieVal));
+			window.history.replaceState(null, null, "?dice=" + diceVal.join(','));
+		}
+	}
+	
+	function isIntAboveZero(val) {
+		let intVal = parseInt(val);
+		return !isNaN(intVal) && (intVal == val) && intVal > 0;
+	}
+	
+	function isInt(val) {
+		let intVal = parseInt(val);
+		return !isNaN(intVal) && (intVal == val);
+	}
+	
+	function adjustArbitrary() {
+		var adjVal = '';		
+		while(!isInt(adjVal)) {
+			adjVal = prompt('Enter adjustment value (integer)');
+			if (adjVal == null) {
+				return;
+			}
+		}
+		adjust(parseInt(adjVal));
+	}
+	
+	function initfunc() {
+		var param = getUrlParameters("dice");
+		if(param) {
+			var diceVal = param.split(",").filter(v => isInt(v)).map(v => parseInt(v));
+			diceVal.forEach(dieVal => doAddDie(dieVal));
+		}
+	}
+	
+	window.currentColorClass = 'white';
+	
+	function setColor(colorClass) {
+		window.currentColorClass = colorClass;
+		replaceClassesByRegex('die_to_roll', /^die_[a-zA-Z0-9]+$/, 'die_'+colorClass);
+	}
+	
+	function replaceClassesByRegex(selectorClass, regex, newClass) {
+	  // Select all elements with the specified selector class
+	  const elements = document.getElementsByClassName(selectorClass);
+  
+	  // Loop over each selected element
+	  Array.from(elements).forEach(element => {
+	    // Get current class list of the element
+	    const classList = Array.from(element.classList);
+    
+	    // Remove any class that matches the provided regex
+	    classList.forEach(cls => {
+	      if (regex.test(cls)) {
+	        element.classList.remove(cls);
+	      }
+	    });
+    
+	    // Add the new class
+	    element.classList.add(newClass);
+	  });
+	}
+	
+	addEventListener("load", initfunc);
+</script>
+<style>
+body {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	font-weight: 300;
+	font-size: 12pt;
+	background: black;
+	color: white;
+}
+
+#diceContainer > div {
+	float: left;
+	padding: 20px;
+	border: solid 1px gray;
+	margin: 4px;
+	font-weight: bold;
+}
+
+.die_white {
+	background: white;
+	color: black;
+}
+
+.die_black {
+	background: black;
+	color: white;
+}
+
+.die_red {
+	background: red;
+	color: white;
+}
+
+.die_green {
+	background: green;
+	color: white;
+}
+
+.die_blue {
+	background: blue;
+	color: white;
+}
+
+.die_cyan {
+	background: cyan;
+	color: black;
+}
+
+.die_magenta {
+	background: magenta;
+	color: white;
+}
+
+.die_yellow {
+	background: yellow;
+	color: black;
+}
+
+#diceContainer > div:hover {
+	color: white;
+	background-color: black;
+	border-color: white;
+}
+
+#buttonRow {
+	clear: both;
+}
+
+#buttonRow button {
+	font-size: 8pt;
+}
+
+#mainContainer > hr {
+	clear: both;
+}
+
+#buttonRow, #colorsRow {
+	text-align: center;
+}
+
+#resultsContainer {
+	font-size: 200%;
+}
+
+.diceType {
+	display: inline-block;
+	padding: 2px;
+	border: solid 1px gray;
+	margin: 2px;
+	font-weight: bold;
+	display: inline-block;
+	min-width: 80px;
+}
+
+.eqSign {
+	color: grey;
+}
+
+.totalSum {
+	color: green;
+}
+
+#buttonRow > button {
+	margin: 0px 5px 0px 5px;
+}
+
+.rollResult {
+	display: inline-block;
+	min-width: 75px;
+}
+
+.totalSum {
+	display: inline-block;
+	min-width: 40px;
+}
+
+.colorSelect {
+	width: 30px;
+	height: 30px;
+	border: solid 1px grey;
+	border-radius: 15px;
+	display: inline-block;
+}
+</style>
+<body>
+	<div id="mainContainer">
+		<div id="diceContainer">
+			<div id="d2"   onclick="roll(2)"   class="die_to_roll die_white">D2</div>
+			<div id="d4"   onclick="roll(4)"   class="die_to_roll die_white">D4</div>
+			<div id="d6"   onclick="roll(6)"   class="die_to_roll die_white">D6</div>
+			<div id="d8"   onclick="roll(8)"   class="die_to_roll die_white">D8</div>
+			<div id="d10"  onclick="roll(10)"  class="die_to_roll die_white">D10</div>
+			<div id="d12"  onclick="roll(12)"  class="die_to_roll die_white">D12</div>
+			<div id="d20"  onclick="roll(20)"  class="die_to_roll die_white">D20</div>
+			<div id="d100" onclick="roll(100)" class="die_to_roll die_white">D100</div>
+		</div>
+		<hr/>
+		<div id="buttonRow">
+			<button onclick="adjust(1)">+1</button>
+			<button onclick="adjust(-1)">-1</button>
+			<button onclick="adjustArbitrary()">adj</button>
+			|
+			<button onclick="next()">Next</button>
+			<button onclick="clearResults()">Clear</button>
+			|
+			<button onclick="addDie()">+die</button>
+		</div>
+		<hr/>
+		<div id="colorsRow">
+			<div class="colorSelect" onclick="setColor('white')" style="background-color: white"></div>
+			<div class="colorSelect" onclick="setColor('red')" style="background-color: red"></div>
+			<div class="colorSelect" onclick="setColor('green')" style="background-color: green"></div>
+			<div class="colorSelect" onclick="setColor('blue')" style="background-color: blue"></div>
+			<div class="colorSelect" onclick="setColor('cyan')" style="background-color: cyan"></div>
+			<div class="colorSelect" onclick="setColor('magenta')" style="background-color: magenta"></div>
+			<div class="colorSelect" onclick="setColor('yellow')" style="background-color: yellow"></div>
+			<div class="colorSelect" onclick="setColor('black')" style="background-color: black"></div>
+		</div>
+		<hr/>
+		<div id="resultsContainer">
+		</div>
+	</div>
+</body>
+</html>

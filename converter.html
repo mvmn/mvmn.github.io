@@ -1,0 +1,91 @@
+<html>
+	<head>
+		<title>Numeric converter</title>
+		<style>
+			input {
+				font-size: 200%;
+				text-align: right;
+				width: 90%;
+				font-family: monospace;
+			}
+			
+			body {
+				font-size: 450%;
+				font-family: monospace;
+			}
+			
+			.base {
+				display: inline-block;
+				padding: 4px;
+				font-family: arial;
+				width: 8%;
+				color: white;
+				background-color: black;
+				text-align: right;
+			}
+		</style>
+		<script>
+			function convertNum(number, base) {
+				return (number >>> 0).toString(base).toUpperCase();
+			}
+			
+			const types = ['hex', 'bin', 'oct', 'dec'];
+			const bases = {'hex': 16, 'bin': 2, 'oct':8, 'dec':10};
+			function upd(type) {
+				var inputVal = parseInt(document.getElementById(type).value, bases[type]);
+				for(var i in types) {
+					const curType = types[i];
+					if(curType !== type) {
+						document.getElementById(curType).value = convertNum(inputVal, bases[curType])
+					}
+				}
+				updViews();
+			}
+			
+			function updViews() {
+				for(var i in types) {
+					var type = types[i];
+					document.getElementById("dec_" + type).innerHTML = getView(document.getElementById(type).value, bases[type])+"<br/>"+getView(document.getElementById(type).value, bases[type], true);
+				}
+			}
+			
+			function getView(val, base, calcPower) {
+				const result = [];
+				const l = val.length;
+				for(var i=0; i<l; i++) {
+					if(i>0) {
+						result.push(" + ");
+					}
+					result.push(parseInt(val.charAt(i), base));
+					result.push("*");
+					if(!calcPower) {
+						result.push(base);
+						result.push("<sup>");
+						result.push(l-i-1);
+						result.push("</sup>");
+					} else {
+						result.push(Math.pow(base, l-i-1));
+					}
+				}
+				return result.join("");
+			}
+		</script>
+	</head>
+	<body>
+		<div>
+			<!-- -->
+			<span class="base">10</span>
+			<input type="text" id="dec" value="" oninput="this.value = this.value.replace(/[^0-9]/g, '').replace(/(\..*)\./g, '$1');" onkeyup="upd('dec')" />
+			<div id="dec_dec"></div>
+			<span class="base">2</span>
+			<input type="text" id="bin" value="" oninput="this.value = this.value.replace(/[^01]/g, '').replace(/(\..*)\./g, '$1');" onkeyup="upd('bin')" />
+			<div id="dec_bin"></div>
+			<span class="base">16</span>
+			<input type="text" id="hex" value="" oninput="this.value = this.value.toUpperCase().replace(/[^0-9A-F]/g, '').replace(/(\..*)\./g, '$1');" onkeyup="upd('hex')" />
+			<div id="dec_hex"></div>
+			<span class="base">8</span>
+			<input type="text" id="oct" value="" oninput="this.value = this.value.replace(/[^0-7]/g, '').replace(/(\..*)\./g, '$1');" onkeyup="upd('oct')" />
+			<div id="dec_oct"></div>
+		</div>
+	</body>
+</html>

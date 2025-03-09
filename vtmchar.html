@@ -1,0 +1,799 @@
+<html>
+	<head>
+		<title>☥ VtM char maker ☥</title>
+		<meta name="viewport" content="width=400">
+		<script 
+				src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 
+				integrity="sha256-3edrmyuQ0w65f8gfBsqowzjJe2iM6n0nKciPUp8y+7E=" 
+				crossorigin="anonymous"></script>
+		<style>
+			body, input, textarea, select {
+				background-color: black;
+				color: white;
+				font-family: serif;
+				margin-bottom: 0.25em;
+			}
+			
+			@media print {
+				.light-theme .topbar {
+					display: none;
+				}
+
+				body {
+					zoom: 60%;
+				}
+				
+				select {
+					max-height: 2em;
+				}
+				
+				.print-pagebreak {
+					page-break-before: always;
+				}
+			}
+
+			.light-theme {
+				background-color: white;
+				filter: hue-rotate(180deg) invert(1);
+			}
+			
+			h1 {
+				color: red;
+			}
+			
+			.light-theme .topbar {
+				filter: hue-rotate(-180deg) invert(1);
+			    background-color: black;
+			    margin: 0;
+			    border-radius: 1em;
+			}
+			
+			.container {
+			  display: flex;
+			  gap: 10px; /* Spacing between columns */
+			}
+
+			.column {
+			  flex: 1; /* Equal width for all columns */
+			  padding: 0.25em;
+			}
+
+			.column2 {
+			  flex: 2; /* Equal width for all columns */
+			  padding: 0.25em;
+			}
+			
+			.form-group {
+			  display: flex;
+			  align-items: center;
+			  margin-bottom: 10px;
+			}
+
+			label {
+				font-weight: bold;
+			}
+			
+			.hr-container {
+			  display: flex;
+			  align-items: center;
+			  gap: 10px;
+			}
+
+			.hr-container hr {
+			  flex: 1;
+			  border: none;
+			  height: 3px;
+			  background-color: white;
+			}
+
+			.hr-text {
+			  padding: 0 10px;
+			  font-weight: bold;
+			  font-size: 120%;
+			}
+			
+			.circle, .square {
+			  width: 1em;
+			  height: 1em;
+			  border: 0;
+			  background-color: transparent;
+			  display: inline-block;
+			  margin: 0.1em;
+			}
+			
+			.h3 {
+				font-weight: bold;
+				display: inline-block;
+				width: 100%;
+				text-align: center;
+				font-size: 120%;
+			}
+			
+			textarea {
+				width: 100%;
+				min-height: 8em;
+			}
+			
+			.disciplines input {
+				width: 100%;
+			}
+			
+			.fullwidth {
+				width: 100%;
+			}
+			
+			.center {
+				text-align: center;
+			}
+			
+			label.attr5 {
+				border-bottom: 1px dotted white;
+			}
+			
+			.attrdiv, .propdiv {
+				width: 100%;
+				display: flex;
+			}
+			
+			.attrdiv select, .attrdiv label, .propdiv input, .propdiv select {
+				flex-grow: 1;
+			}
+
+			.attrdiv .circle, .attrdiv .square, .propdiv label {
+			    flex-grow: 0;
+			    white-space: nowrap;
+			}
+			
+			.attrvals {
+				margin-left: 5px;
+			}
+			
+			.proplabel {
+				margin-right: 5px;
+			}
+			
+			.rightalign {
+				text-align: right;
+			}
+			
+			.circle-container {
+	            cursor: pointer;
+	            display: inline-block;
+	        }
+	        svg {
+	            width: 100%;
+	            height: 100%;
+	        }
+	        line, circle, rect {
+	            stroke: white;
+	            stroke-width: 1;
+	        }
+	        .hidden {
+	            display: none;
+	        }
+			
+			textarea {
+				margin-bottom: 4px;
+			}
+		</style>
+		<script>
+			class MultistateCheck {
+	            constructor(parentElement, circular, callback, state) {
+					this.parentElement = parentElement;
+	                this.state = state && !Number.isNaN(parseInt(state)) ? parseInt(state) : 0;
+	                this.container = document.createElement('div');
+	                this.container.classList.add('circle-container');
+	                this.container.onclick = () =>  {
+						this.toggleState();
+						if (callback) {
+							callback(this.container, this.state);
+						}
+					}
+        
+	                this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+	                this.svg.setAttribute("viewBox", "0 0 8 8");
+        
+	                this.circle = document.createElementNS("http://www.w3.org/2000/svg", circular ? "circle" : "rect");
+					if (circular) {
+		                this.circle.setAttribute("cx", "4");
+		                this.circle.setAttribute("cy", "4");
+	                	this.circle.setAttribute("r", "4");
+					} else {
+	                	this.circle.setAttribute("height", "8");
+	                	this.circle.setAttribute("width", "8");		
+					}
+	                this.circle.setAttribute("fill", "none");
+        
+	                this.line1 = this.createLine(1, 7, 7, 1);
+	                this.line2 = this.createLine(1, 1, 7, 7);
+	                this.line3 = this.createLine(0, 4, 8, 4);
+        
+	                this.filledCircle = document.createElementNS("http://www.w3.org/2000/svg", circular ? "circle" : "rect");
+					if (circular) {
+		                this.filledCircle.setAttribute("cx", "4");
+		                this.filledCircle.setAttribute("cy", "4");
+	                	this.filledCircle.setAttribute("r", "4");
+					} else {
+	                	this.filledCircle.setAttribute("height", "8");
+	                	this.filledCircle.setAttribute("width", "8");				
+					}					
+	                this.filledCircle.setAttribute("fill", "white");
+	                this.filledCircle.classList.add("hidden");
+        
+	                this.svg.append(this.circle, this.line1, this.line2, this.line3, this.filledCircle);
+	                this.container.appendChild(this.svg);
+	                parentElement.appendChild(this.container);
+	                this.updateState();
+	            }
+
+	            createLine(x1, y1, x2, y2) {
+	                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+	                line.setAttribute("x1", x1);
+	                line.setAttribute("y1", y1);
+	                line.setAttribute("x2", x2);
+	                line.setAttribute("y2", y2);
+	                line.classList.add("hidden");
+	                return line;
+	            }
+
+	            toggleState() {
+	                this.updateState((this.state + 1) % 5);
+	            }
+
+	            updateState(newState) {
+					this.state = newState && !Number.isNaN(parseInt(newState)) || 0 === newState ? parseInt(newState) : this.state;
+	                this.line1.classList.toggle("hidden", this.state < 1);
+	                this.line2.classList.toggle("hidden", this.state < 2);
+	                this.line3.classList.toggle("hidden", this.state < 3);
+	                this.filledCircle.classList.toggle("hidden", this.state < 4);
+					
+					this.parentElement.setAttribute("state", this.state);
+	            }
+
+				getState() {
+					return this.state;
+				}
+	        }
+
+			var selectorOptions = {
+				'disciplines': ["", "Animalism", "Athanor Corporis", "Auspex", "Blood Sorcery", "Calcinatio", "Celerity", "Dominate", "Fixatio", "Fortitude", "Obfuscate", "Oblivion", "Potence", "Presence", "Protean", "Thin-blood Alchemy"],
+				'backgrounds': ["", "Allies", "Enemies", "Contacts", "Fame", "Infamy", "Influence", "Loresheets", "Mask", "Mawla", "Adversary", "Resources", "Retainers", "Status"],
+				'merits': ["", "Bonding: Bond Resistance", "Bonding: Enduring Bond", "Bonding: Short Bond", "Bonding: Bonds of Fealty", "Bonding: Unbondable", "Blood Ties: Consanguinous Sense", "Blood Ties: Consanguinous Influence", "Blood Ties: Sins of the Father", "Caitiff: Favored Blood", "Caitiff: Mark of Caine", "Caitiff: Mockingbird", "Caitiff: Sun-Scarred", "Caitiff: Uncle Fangs", "Contagion: Blood Empathy", "Feeding: Blood Hound", "Feeding: Iron Gullet", "Feeding: Vessel Recognition", "Ghoul: Blood Empathy", "Ghoul: Unseemly Aura", "Linguistics: Language fluency", "Looks: Famous Face", "Looks: Ingenue", "Looks: Remarkable Feature", "Looks: Beautiful", "Looks: Up All Night", "Looks: Stunning", "Looks: Up All Night x2", "Mythic: Eat food", "Mythic: Nuit Mode", "Mythic: Pack Diablerie", "Mythic: Cold Dead Hunger", "Mythic: Luck of the Devil", "Other: Check the Trunk", "Other: Side Hustler", "Other: Tempered Will", "Other: Untouchable", "Psychological: Soothed Beast", "Psychological: False Love", "Psychological: Penitence", "Psychological: Unholy Will (2)", "Psychological: Unholy Will (4)", "Psychological: Zealotry", "Substance Use: High-Functioning Addict", "Thin-blood: Anarch Comrades", "Thin-blood: Abhorrent Blood", "Thin-blood: Camarilla Contact", "Thin-blood: Catenating Blood", "Thin-blood: Day Drinker", "Thin-blood: Discipline Affinity", "Thin-blood: Faith-Proof", "Thin-blood: Lifelike", "Thin-blood: Low Appetite", "Thin-blood: Lucid Dreamer", "Thin-blood: Mortality's Mien", "Thin-blood: Swift Feeder", "Thin-blood: Thin-blood Alchemist", "Thin-blood: Vampiric Resilience"],
+				'flaws': ["", "Archaic: Archaic", "Archaic: Living in the Past", "Bonding: Bondslave", "Bonding: Bond Junkie", "Bonding: Long Bond", "Blood Ties: Bondslave", "Caitiff: Befouling Vitae", "Caitiff: Clan Curse", "Caitiff: Debt Peon", "Caitiff: Liquidator", "Caitiff: Muddled Blood", "Caitiff: Walking Omen", "Caitiff: Word-Scarred", "Contagion: Disease Vector", "Contagion: Plaugebringer", "Diablerie: Blatant Diablerist", "Diablerie: Inherited Bane", "Feeding: Farmer", "Feeding: Organovore", "Feeding: Methuselah's Thirst", "Feeding: Prey Exclusion", "Feeding: Vein Tapper", "Ghoul: Crone's Curse", "Ghoul: Distressing Fangs", "Linguistics: Illiterate", "Looks: Stench", "Looks: Transparent", "Looks: Ugly", "Looks: Repulsive", "Looks: Unblinking Visage", "Mythic: Stake Bait", "Mythic: Folkloric Bane", "Mythic: Folkloric Block", "Mythic: Starving Decay", "Mythic: Stigmata", "Mythic: Twice Cursed", "Other: Knowledge Hungry", "Other: Prestation Debts", "Other: Risk Taker", "Other: Weak-Willed", "Psychological: Beacon of Profanity", "Psychological: Crisis of Faith", "Psychological: Groveling Worm", "Psychological: Horrible Scars of Penitence", "Psychological: Living on the Edge", "Psychological: Weak-Willed", "Substance Use: Hopeless Addiction", "Substance Use: Addiction", "Supernatural: Two Masters", "Thin-blood: Baby Teeth", "Thin-blood: Heliophobia", "Thin-blood: Bestial Temper", "Thin-blood: Branded by the Camarilla", "Thin-blood: Clan Curse", "Thin-blood: Mortal Frailty", "Thin-blood: Dead Flesh", "Thin-blood: Night Terrors", "Thin-blood: Plague Bearer", "Thin-blood: Sloppy Drinker", "Thin-blood: Sun-Faded", "Thin-blood: Supernatural Tell", "Thin-blood: Shunned by the Anarchs", "Thin-blood: Twilight Presence", "Thin-blood: Unending Hunger", "Thin-blood: Vitae Dependency"],
+				'havenmods': ["", "+ Hidden Armory", "+ Business Establishment", "+ Cell", "+ Furcus", "+ Watchmen", "+ Laboratory", "+ Library", "+ Machine Shop", "+ Location", "+ Luxury", "+ Postern", "+ Security System", "+ Surgery", "+ Warding", "- Compromised", "- Creepy", "- Haunted", "- Shared"],
+				'predator_type': ["Alleycat", "Bagger", "Blood Leech", "Cleaver", "Consensualist", "Extortionist", "Farmer", "Graverobber", "Grim Reaper", "Montero", "Osiris", "Pursuer", "Sandman", "Roadside Killer", "Scene Queen", "Siren", "Trapdoor"],
+				'clan': [ "BanuHaqim", "Brujah", "Caitiff", "Gangrel", "Hecata", "Giovanni", "Lamiae", "Lasombra", "Malkavian", "Nagaraja", "Nosferatu", "Ravnos", "Salubri", "Samedi", "Toreador", "Tremere", "Tzimisce", "Ventrue", "TheMinistry", "Thin-Blood" ]
+			}
+
+			var templates = [];
+			templates['attr5'] = function(attrs) {
+				return `<div class="attrdiv"><label class="attr5">${attrs.name}</label> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
+			}
+			templates['sel_attr5'] = function(attrs) {
+				var options = selectorOptions[attrs.options];
+				var optionsHTMLs = [];
+				for(var i = 0; i<options.length; i++) {
+					var option = options[i];
+					optionsHTMLs.push(`<option value="${option}">${option}</option>`);
+				}
+				var optionsHTML = optionsHTMLs.join("\n");
+				
+				return `<div class="attrdiv"><select id="attr_${attrs.id}" class="charprop">${optionsHTML}</select> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
+			}			
+			templates['circle5'] = function(attrs) {
+				return `<span id="attr_${attrs.id}_vals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span>`;				
+			}
+			templates['square5'] = function(attrs) {
+				return `<span id="attr_${attrs.id}_vals"><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span></span>`;				
+			}
+			templates['prop_field'] = function(attrs) {
+				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="text" class="charprop" /></div>`;
+			}
+			templates['prop_select'] = function(attrs) {
+				var options = selectorOptions[attrs.options];
+				var optionsHTMLs = [];
+				for(var i = 0; i<options.length; i++) {
+					var option = options[i];
+					optionsHTMLs.push(`<option value="${option}">${option}</option>`);
+				}
+				var optionsHTML = optionsHTMLs.join("\n");
+				
+				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <select id="prop_${attrs.id}" class="charprop">${optionsHTML}</select></div>`;
+			}
+			
+			templates['5row'] = function(attrs) {
+				return `<ol class="disciplines"><li><input id="propinp1_${attrs.id}" class="charprop" /></li><li><input id="propinp2_${attrs.id}" class="charprop"/></li><li><input id="propinp3_${attrs.id}" class="charprop"/></li><li><input id="propinp4_${attrs.id}" class="charprop"/></li><li><input id="propinp5_${attrs.id}" class="charprop"/></li></ol>`;
+			}
+			
+			function childIndex(child) {
+				return Array.prototype.indexOf.call(child.parentElement.children, child);
+			}
+						
+			window.addEventListener('load', function() {
+				let theme = localStorage.getItem('theme');
+
+				if (!theme) {
+					if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+						theme = 'dark';
+					} else {
+						theme = 'light';
+					}
+					localStorage.setItem('theme', theme);
+				}
+
+				if (theme === 'light') {
+					document.body.classList.add('light-theme');
+				}
+
+				document.getElementById('theme-toggle').addEventListener('click', function() {
+					document.body.classList.toggle('light-theme');
+
+					if (document.body.classList.contains('light-theme')) {
+						localStorage.setItem('theme', 'light');
+					} else {
+						localStorage.setItem('theme', 'dark');
+					}
+				});
+				
+				var templateTags = document.getElementsByTagName('tpl');
+				while(templateTags.length > 0) {
+					var templateTag = templateTags[0];
+					var templateId = templateTag.getAttribute("t");
+					var template = templates[templateId];
+					
+					var attrNames = templateTag.getAttributeNames();
+					var attrsMap = {};
+					for(var a = 0; a < attrNames.length; a++) {
+						var attrName = attrNames[a];
+						if (attrName === 't') continue;
+						var attrVal = templateTag.getAttribute(attrName);
+						attrsMap[attrName] = attrVal;
+					}
+					templateTag.outerHTML = template.apply(null, [attrsMap]);
+				}
+				
+				window.multiselects = {};
+								
+				var msCircles = document.getElementsByClassName("circle");
+				var msSquares = document.getElementsByClassName("square");
+				
+				var getMultiSelectKey = msElement => "MSProp_" + msElement.parentElement.id + "#" + childIndex(msElement);
+				
+				// Create and restore multistate checks values
+				for(var i = 0; i < msCircles.length; i++) {
+					var elem = msCircles[i];
+					var lsKey = getMultiSelectKey(elem);
+					var ms = new MultistateCheck(elem, true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					multiselects[lsKey] = ms;
+				}
+				for(var i = 0; i < msSquares.length; i++) {
+					var elem = msSquares[i];
+					var lsKey = getMultiSelectKey(elem);
+					var ms = new MultistateCheck(elem, false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					multiselects[lsKey] = ms;
+				}
+				
+				// Inputs change handle
+				var changeHandle = el => {
+					var id = el.target.attributes['id'].value;
+					if ($(el.target).is(':checkbox')) {
+						localStorage.setItem("Prop_" + id, $(el.target).prop("checked"));
+					} else {
+						localStorage.setItem("Prop_" + id, $(el.target).val());
+					}
+				};
+				
+				$(".charprop").on('change', changeHandle);
+				$(".charprop").on('input', changeHandle);
+				
+				// Restore inputs values
+				$(".charprop").each((i, v) => {
+					var propVal = localStorage.getItem("Prop_" + v.id);
+					if (propVal) {
+						if ($(v).is(':checkbox')) {
+							$(v).prop("checked", propVal && (propVal === true || propVal.toString().toLowerCase() === "true"));
+						} else {
+							$(v).val(propVal);
+						}
+					}
+				});
+				
+				// Import
+				$("#fileInput").on("change", event => {
+					var file = event.target.files[0];
+					if (file) {
+					     const reader = new FileReader();
+						 reader.readAsText(file);
+
+				         reader.onload = function(e) {
+						 	const importedObject = JSON.parse(e.target.result);
+							console.log(importedObject);
+							var keys = Object.keys(importedObject);
+							for(var i=0; i<keys.length; i++) {
+								var key = keys[i];
+								var val = importedObject[key];
+								localStorage.setItem(key, val);
+								if (key.startsWith("MSProp_")) {
+									multiselects[key].updateState(parseInt(val));
+								} else {
+									var id = key.substring("Prop_".length);
+									var elementToSet = $("#"+id);
+									if($(elementToSet).is(':checkbox')) {
+										elementToSet.prop("checked", val && (val === true || val.toString().toLowerCase() === "true"));
+									} else {
+										elementToSet.val(val);
+									}
+								}
+							}
+				         };
+
+				         reader.onerror = function(e) {
+							console.error("FileReader Error: ", e);
+				            alert(`Помилка імпорту: ${e.target.error.code} ${e.target.error.message}`);
+				         };
+					}
+					event.target.value = "";
+				});
+				$("#btn_import").on("click", () => $("#fileInput").click());
+				$("#btn_export").on("click", () => {
+					var charData = {};
+					for(var i=0; i<localStorage.length; i++) {
+						var key = localStorage.key(i);
+						if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
+							charData[key] = localStorage.getItem(key);
+						}
+					}
+					const jsonString = JSON.stringify(charData, null, 2);
+					const blob = new Blob([jsonString], { type: 'application/json' });
+					const link = document.createElement('a');
+					link.href = URL.createObjectURL(blob);
+					link.download = 'vtmchar '+$("#prop_name").val()+'.json';
+					link.click();
+				});
+				
+				$("#btn_clear").on("click", () => {
+					if (window.confirm("Are you sure?")) {						
+						for(var i=0; i<localStorage.length; i++) {
+							var key = localStorage.key(i);
+							if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
+								if(key.startsWith("MSProp_")) {
+									localStorage.setItem(key, 0);
+									multiselects[key].updateState(0);
+								} else {
+									localStorage.setItem(key, '');
+									var id = key.substring("Prop_".length);
+									var elementToClear = $("#"+id);
+									if($(elementToClear).is(':checkbox')) {
+										elementToClear.prop("checked", false);
+									} else {
+										elementToClear.val('');
+									}
+								}
+							}
+						}
+					}
+				});
+			});
+
+		</script>
+	</head>
+	<body>
+		<div class="container topbar">
+		  <div class="column2">
+			  <h1>Vampire: ☥he Masquerade -- 𝔠𝔥𝔞𝔯𝔞𝔠𝔱𝔢𝔯 𝔰𝔥𝔢𝔢𝔱</h1>
+		  </div>
+ 		  <div class="column rightalign">
+			  <div><span id="theme-toggle" data-i18n="theme_toggle">☀️</span></div>
+			  <div>
+				  <button id="btn_clear">Clear</button> 
+				  <button id="btn_export">Export</button> 
+				  <button id="btn_import">Import</button>
+			  </div>
+			  <input type="file" id="fileInput" style="display: none;" />
+		  </div>
+		</div>
+		<div class="container">
+		  <div class="column">
+			  <div><tpl t="prop_field" name="Name" id="name" /></div>
+			  <div><tpl t="prop_field" name="Concept" id="concept" /></div>
+			  <div><tpl t="prop_field" name="Chronicle" id="chronicle" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="prop_field" name="Ambition" id="ambition" /></div>
+			  <div><tpl t="prop_field" name="Desire" id="desire" /></div>
+			  <div><tpl t="prop_select" name="Predator" id="predator" options="predator_type" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="prop_select" name="Clan" id="clan" options="clan" /></div>
+			  <div><tpl t="prop_field" name="Generation" id="generation" /></div>
+			  <div><tpl t="prop_field" name="Sire" id="sire" /></div>
+		  </div>
+		</div>
+		<div class="hr-container">
+		  <hr>
+		  <span class="hr-text">Attributes</span>
+		  <hr>
+		</div>
+		<div class="container">
+		  <div class="column">
+			  <div><tpl t="attr5" name="Strength" id="strength" /></div>
+			  <div><tpl t="attr5" name="Dexterity" id="dexterity" /></div>
+			  <div><tpl t="attr5" name="Stamina" id="stamina" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="attr5" name="Charisma" id="charisma" /></div>
+			  <div><tpl t="attr5" name="Manipulation" id="manipulation" /></div>
+			  <div><tpl t="attr5" name="Composure" id="composure" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="attr5" name="Intelligence" id="intelligence" /></div>
+			  <div><tpl t="attr5" name="Wits" id="wits" /></div>
+			  <div><tpl t="attr5" name="Resolve" id="resolve" /></div>
+		  </div>
+		</div>
+		<div class="hr-container">
+		  <hr>
+		  <span class="hr-text">Skills</span>
+		  <hr>
+		</div>
+		<div class="container">
+		  <div class="column">
+			  <div><tpl t="attr5" name="Athletics" id="Athletics" /></div>
+			  <div><tpl t="attr5" name="Brawl" id="Brawl" /></div>
+			  <div><tpl t="attr5" name="Craft" id="Craft" /></div>
+			  <div><tpl t="attr5" name="Drive" id="Drive" /></div>
+			  <div><tpl t="attr5" name="Firearms" id="Firearms" /></div>
+			  <div><tpl t="attr5" name="Melee" id="Melee" /></div>
+			  <div><tpl t="attr5" name="Larceny" id="Larceny" /></div>
+			  <div><tpl t="attr5" name="Stealth" id="Stealth" /></div>
+			  <div><tpl t="attr5" name="Survival" id="Survival" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="attr5" name="AnimalKen" id="AnimalKen" /></div>
+			  <div><tpl t="attr5" name="Etiquette" id="Etiquette" /></div>
+			  <div><tpl t="attr5" name="Insight" id="Insight" /></div>
+			  <div><tpl t="attr5" name="Intimidation" id="Intimidation" /></div>
+			  <div><tpl t="attr5" name="Leadership" id="Leadership" /></div>
+			  <div><tpl t="attr5" name="Performance" id="Performance" /></div>
+			  <div><tpl t="attr5" name="Persuasion" id="Persuasion" /></div>
+			  <div><tpl t="attr5" name="Streetwise" id="Streetwise" /></div>
+			  <div><tpl t="attr5" name="Subterfuge" id="Subterfuge" /></div>
+		  </div>
+		  <div class="column">
+			  <div><tpl t="attr5" name="Academics" id="Academics" /></div>
+			  <div><tpl t="attr5" name="Awareness" id="Awareness" /></div>
+			  <div><tpl t="attr5" name="Finance" id="Finance" /></div>
+			  <div><tpl t="attr5" name="Investigation" id="Investigation" /></div>
+			  <div><tpl t="attr5" name="Medicine" id="Medicine" /></div>
+			  <div><tpl t="attr5" name="Occult" id="Occult" /></div>
+			  <div><tpl t="attr5" name="Politics" id="Politics" /></div>
+			  <div><tpl t="attr5" name="Science" id="Science" /></div>
+			  <div><tpl t="attr5" name="Technology" id="Technology" /></div>
+		  </div>
+		</div>
+		<div class="hr-container">
+		  <hr>
+		</div>
+		<div class="container">
+		  <div class="column">
+			  <div><span class="h3">Chronicle Tenets</span></div>
+			  <div><textarea id="tenets" class="charprop"></textarea></div>
+		  </div>
+		  <div class="column">
+			  <div><span class="h3">Touchstones & Convictions</span></div>
+			  <div><textarea id="touchstones" class="charprop"></textarea></div>
+		  </div>
+		  <div class="column">
+			  <div><span class="h3">Clan bane</span></div>
+			  <div><textarea id="bane" class="charprop"></textarea></div>
+		  </div>
+		</div>
+		<div class="container">
+		  <div class="column2">
+			<div class="hr-container">
+			  <hr>
+			  <span class="hr-text">Disciplines</span>
+			  <hr>
+			</div>
+		  </div>
+		  <div class="column">
+			<div class="hr-container">
+			  <hr>
+			</div>
+		  </div>
+		</div>
+		<div class="container">
+		  <div class="column">
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis1" /></span>
+				   <tpl t="5row" id="dis1detail">
+			  </div>
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis2" /></span>
+				   <tpl t="5row" id="dis2detail">
+			  </div>
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis3" /></span>
+				   <tpl t="5row" id="dis3detail">
+			  </div>
+		  </div>
+		  <div class="column">
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis4" /></span>
+				   <tpl t="5row" id="dis4detail">
+			  </div>
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis5" /></span>
+				   <tpl t="5row" id="dis5detail">
+			  </div>
+			  <div>
+				   <span><tpl t="sel_attr5" options="disciplines" id="dis6" /></span>
+				   <tpl t="5row" id="dis6detail">
+			  </div>
+		  </div>
+		  <div class="column">
+			 <div class="fullwidth center h3">Health</div>
+			 <div class="fullwidth center">
+				   <span><tpl t="square5" id="health1" /></span>
+				   <span><tpl t="square5" id="health2" /></span>
+				   <span><tpl t="square5" id="health3" /></span>
+			 </div>
+			 <div class="fullwidth center h3">Willpower</div>
+			 <div class="fullwidth center">
+				   <span><tpl t="square5" id="wp1" /></span>
+				   <span><tpl t="square5" id="wp2" /></span>
+				   <span><tpl t="square5" id="wp3" /></span>
+			 </div>
+			 <div class="fullwidth center h3">Humanity</div>
+			 <div class="fullwidth center">
+				   <span><tpl t="square5" id="humanity1" /></span>
+				   <span><tpl t="square5" id="humanity2" /></span>
+			 </div>
+			 <div class="fullwidth center h3">Hunger</div>
+			 <div class="fullwidth center">
+				   <span><tpl t="square5" id="hunger" /></span>
+			 </div>
+			 <div class="fullwidth center h3">Blood potency</div>
+			 <div class="fullwidth center">
+				   <span><tpl t="circle5" id="bloodp1" /></span>
+				   <span><tpl t="circle5" id="bloodp2" /></span>
+			 </div>
+	 		<div class="container">
+	 		  <div class="column">
+				  <div>Blood surge:</div>
+				  <div><input id="blood_surge" class="fullwidth charprop" /></div>
+				  <div>Power bonus:</div>
+				  <div><input id="power_bonus" class="fullwidth charprop" /></div>
+				  <div>Feeding penalty:</div>
+				  <div><input id="feeding_penalty" class="fullwidth charprop" /></div>
+				  <div class="h3">Resonance:</div>
+				  <div><input id="resonance" class="fullwidth charprop" /></div>
+			  </div>
+	 		  <div class="column">
+				  <div>Mend amount:</div>
+				  <div><input id="mend_amount" class="fullwidth charprop" /></div>
+				  <div>Rouse re-roll:</div>
+				  <div><input id="rouse_reroll" class="fullwidth charprop" /></div>
+				  <div>Bane severity:</div>
+				  <div><input id="bane_severity" class="fullwidth charprop" /></div>
+				  <div class="h3">Hunting:</div>
+				  <div><input id="hunting" class="fullwidth charprop" /></div>
+			  </div>
+		    </div>
+		  </div>
+		</div>
+		<div class="container print-pagebreak">
+		  <div class="column">
+			<div class="hr-container">
+			  <hr> <span class="hr-text">Advantages</span> <hr>
+			</div>
+			<div class="h3 fullwidth center">
+				Backgrounds
+			</div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg1" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg2" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg3" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg4" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg5" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg6" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg7" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg8" /></div>
+			<div><tpl t="sel_attr5" options="backgrounds" id="bg9" /></div>
+			
+			<div class="h3 fullwidth center">
+				Merits
+			</div>
+			<div><tpl t="sel_attr5" options="merits" id="merit1" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit2" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit4" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit5" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit6" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit7" /></div>
+			
+			<div class="h3 fullwidth center">
+				Flaws
+			</div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw1" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw2" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw3" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw4" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw5" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw6" /></div>
+			<div><tpl t="sel_attr5" options="flaws" id="flaw7" /></div>
+			
+			<div class="h3 fullwidth center">
+				Haven
+			</div>
+			<div><input id="haven" class="fullwidth charprop" /></div>
+			<div>No haven? <input id="no_haven" type="checkbox" class="charprop" /> Haven rating: <tpl t="circle5" id="haven_rating" /></div>
+			<div><tpl t="sel_attr5" options="havenmods" id="havenmod1" /></div>
+			<div><tpl t="sel_attr5" options="havenmods" id="havenmod2" /></div>
+			<div><tpl t="sel_attr5" options="havenmods" id="havenmod3" /></div>
+			<div><tpl t="sel_attr5" options="havenmods" id="havenmod4" /></div>
+
+			<div class="h3 fullwidth center">
+				Experience
+			</div>
+			<div><tpl t="prop_field" name="Total" id="exp_total" /></div>
+			<div><tpl t="prop_field" name="Spent" id="exp_spent" /></div>
+			
+			<div class="h3 fullwidth center">
+				Weapons
+			</div>
+			
+			<div class="container">
+			   <div class="column2">
+				    <label>Weapon</label>
+					<div><input id="weapon1" class="fullwidth charprop" /></div>
+					<div><input id="weapon2" class="fullwidth charprop" /></div>
+					<div><input id="weapon3" class="fullwidth charprop" /></div>
+					<div><input id="weapon4" class="fullwidth charprop" /></div>
+					<div><input id="weapon5" class="fullwidth charprop" /></div>
+					<div><input id="weapon6" class="fullwidth charprop" /></div>
+               </div>
+			   <div class="column">
+				    <label>Damage</label>
+					<div><input id="weapon1_dmg" class="fullwidth charprop" /></div>
+					<div><input id="weapon2_dmg" class="fullwidth charprop" /></div>
+					<div><input id="weapon3_dmg" class="fullwidth charprop" /></div>
+					<div><input id="weapon4_dmg" class="fullwidth charprop" /></div>
+					<div><input id="weapon5_dmg" class="fullwidth charprop" /></div>
+					<div><input id="weapon6_dmg" class="fullwidth charprop" /></div>
+               </div>
+			</div>
+		  </div>
+
+		  <div class="column2">
+			<div class="hr-container"><hr> <span class="hr-text">Biography</span> <hr></div>
+			<div>
+				<label>True age:</label> <input id="true_age" class="charprop" size="2" />
+				<label>Apparent age:</label> <input id="apparent_age" class="charprop" size="2" />
+				<label>Date of birth:</label> <input id="birth_date" class="charprop" size="4" />
+				<label>Date of death:</label> <input id="death_date" class="charprop" size="4" />
+		  </div>
+		  <div>
+			  <label>Appearance:</label>
+			  <textarea id="appearance" class="charprop fullwidth" rows="6"></textarea>
+		  </div>
+		  <div>
+			  <label>Distinguishing features:</label>
+			  <textarea id="features" class="charprop fullwidth" rows="5"></textarea>
+		  </div>
+		  <div>
+			  <label>History:</label>
+			  <textarea id="history" class="charprop fullwidth" rows="14"></textarea>
+		  </div>
+
+		  <div class="hr-container"><hr> <span class="hr-text">Posessions</span> <hr></div>
+		  <div>
+			  <textarea id="posessions" class="charprop fullwidth" rows="6"></textarea>
+		  </div>
+		  
+		  <div class="hr-container"><hr> <span class="hr-text">Notes</span> <hr></div>
+		  <div>
+			  <textarea id="notes" class="charprop fullwidth" rows="13"></textarea>
+		  </div>
+		</div>
+	</body>
+</html>

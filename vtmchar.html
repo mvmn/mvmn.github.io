@@ -114,6 +114,10 @@
 				min-height: 8em;
 			}
 			
+			input, textarea {
+				border: dotted 1px grey;
+			}
+			
 			.disciplines input {
 				width: 100%;
 			}
@@ -406,6 +410,82 @@
 					}
 				});
 				
+				function clearChar() {
+					for(var i=0; i<localStorage.length; i++) {
+						var key = localStorage.key(i);
+						if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
+							if(key.startsWith("MSProp_")) {
+								localStorage.setItem(key, 0);
+								multiselects[key].updateState(0);
+							} else if(key.startsWith("Prop_")) {
+								localStorage.setItem(key, '');
+								var id = key.substring("Prop_".length);
+								var elementToClear = $("#"+id);
+								if($(elementToClear).is(':checkbox')) {
+									elementToClear.prop("checked", false);
+								} else {
+									elementToClear.val('');
+								}
+							}
+						}
+					}
+				}
+				
+				function loadChar(importedObject) {
+					clearChar();
+					if(typeof importedObject == 'string') {
+						importedObject = JSON.parse(importedObject);
+					}
+					var keys = Object.keys(importedObject);
+					for(var i=0; i<keys.length; i++) {
+						var key = keys[i];
+						var val = importedObject[key];
+						localStorage.setItem(key, val);
+						if (key.startsWith("MSProp_")) {
+							multiselects[key].updateState(parseInt(val));
+						} else if(key.startsWith("Prop_")) {
+							var id = key.substring("Prop_".length);
+							var elementToSet = $("#"+id);
+							if($(elementToSet).is(':checkbox')) {
+								elementToSet.prop("checked", val && (val === true || val.toString().toLowerCase() === "true"));
+							} else {
+								elementToSet.val(val);
+							}
+						}
+					}
+				}
+				
+				function saveChar() {
+					var charData = {};
+					for(var i=0; i<localStorage.length; i++) {
+						var key = localStorage.key(i);
+						if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
+							charData[key] = localStorage.getItem(key);
+						}
+					}
+					return charData;
+				}
+								
+				window.currentChar = 0;
+
+				// Restore character selector
+				var savedSelectedIndex = localStorage.getItem('currentChar');
+				if (savedSelectedIndex) {
+					savedSelectedIndex = parseInt(savedSelectedIndex);
+					window.currentChar = savedSelectedIndex;
+				}
+				var charStashIndex = 1;
+				do {
+					stashedChar = localStorage.getItem("charstash_"+(charStashIndex++));
+					if(stashedChar) {
+						$("#characterSelector").append($('<option>', {
+						    value: charStashIndex - 1,
+						    text: charStashIndex - 1,
+							selected: savedSelectedIndex == (charStashIndex - 1) ? 'selected': null
+						}));
+					}
+				} while (stashedChar);
+				
 				// Import
 				$("#fileInput").on("change", event => {
 					var file = event.target.files[0];
@@ -416,23 +496,8 @@
 				         reader.onload = function(e) {
 						 	const importedObject = JSON.parse(e.target.result);
 							console.log(importedObject);
-							var keys = Object.keys(importedObject);
-							for(var i=0; i<keys.length; i++) {
-								var key = keys[i];
-								var val = importedObject[key];
-								localStorage.setItem(key, val);
-								if (key.startsWith("MSProp_")) {
-									multiselects[key].updateState(parseInt(val));
-								} else {
-									var id = key.substring("Prop_".length);
-									var elementToSet = $("#"+id);
-									if($(elementToSet).is(':checkbox')) {
-										elementToSet.prop("checked", val && (val === true || val.toString().toLowerCase() === "true"));
-									} else {
-										elementToSet.val(val);
-									}
-								}
-							}
+							loadChar(importedObject);
+							localStorage.setItem("charstash_" + window.currentChar, JSON.stringify(importedObject));
 				         };
 
 				         reader.onerror = function(e) {
@@ -442,16 +507,10 @@
 					}
 					event.target.value = "";
 				});
+				
 				$("#btn_import").on("click", () => $("#fileInput").click());
 				$("#btn_export").on("click", () => {
-					var charData = {};
-					for(var i=0; i<localStorage.length; i++) {
-						var key = localStorage.key(i);
-						if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
-							charData[key] = localStorage.getItem(key);
-						}
-					}
-					const jsonString = JSON.stringify(charData, null, 2);
+					const jsonString = JSON.stringify(saveChar(), null, 2);
 					const blob = new Blob([jsonString], { type: 'application/json' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
@@ -461,28 +520,60 @@
 				
 				$("#btn_clear").on("click", () => {
 					if (window.confirm("Are you sure?")) {
-						for(var i=0; i<localStorage.length; i++) {
-							var key = localStorage.key(i);
-							if(key.startsWith("MSProp_") || key.startsWith("Prop_")) {
-								if(key.startsWith("MSProp_")) {
-									localStorage.setItem(key, 0);
-									multiselects[key].updateState(0);
-								} else {
-									localStorage.setItem(key, '');
-									var id = key.substring("Prop_".length);
-									var elementToClear = $("#"+id);
-									if($(elementToClear).is(':checkbox')) {
-										elementToClear.prop("checked", false);
-									} else {
-										elementToClear.val('');
-									}
-								}
-							}
+						clearChar();
+					}
+				});
+				
+				$("#btn_char_add").on("click", () => {
+					var selectedValue = $("#characterSelector option:selected" ).val();
+					var nextOptionNumber = $("#characterSelector option").length;
+					$("#characterSelector").append($('<option>', {
+					    value: nextOptionNumber,
+					    text: nextOptionNumber
+					}));
+					localStorage.setItem("charstash_" + window.currentChar, JSON.stringify(saveChar()));
+					clearChar();
+					$('#characterSelector option').eq(nextOptionNumber).prop('selected', true);
+					window.currentChar = nextOptionNumber;
+					localStorage.setItem('currentChar', window.currentChar);
+				});
+				
+				$("#characterSelector").on("change", () => {
+					var selectedValue = $("#characterSelector option:selected" ).val();
+					localStorage.setItem("charstash_" + window.currentChar, JSON.stringify(saveChar()));
+					var stashedChar = localStorage.getItem("charstash_" + selectedValue);
+					clearChar();
+					if (stashedChar) {
+						loadChar(stashedChar);
+					}
+					window.currentChar = selectedValue;
+					localStorage.setItem('currentChar', window.currentChar);
+				});
+				
+				$("#btn_char_delete").on("click", () => {
+					var totalChars = $("#characterSelector option").length;
+					if (totalChars == 1) {
+						return;
+					}
+					if (window.confirm("Are you sure?")) {
+						var selectedValue = $("#characterSelector option:selected" ).val();
+						for(var i = parseInt(selectedValue); i < totalChars-1; i++) {
+							localStorage.setItem("charstash_" + i, localStorage.getItem("charstash_" + (i + 1)));
+						}
+						localStorage.removeItem("charstash_" + (totalChars-1));
+						$("#characterSelector option:last").remove();
+						var newSelectedValue = parseInt(selectedValue) - 1;
+						$('#characterSelector option').eq(newSelectedValue).prop('selected', true);
+						window.currentChar = newSelectedValue;
+						localStorage.setItem('currentChar', window.currentChar);
+						var stashedChar = localStorage.getItem("charstash_" + window.currentChar);
+						clearChar();
+						if (stashedChar) {
+							loadChar(stashedChar);
 						}
 					}
 				});
 			});
-
 		</script>
 	</head>
 	<body>
@@ -496,8 +587,16 @@
 				  <button id="btn_clear">Clear</button>
 				  <button id="btn_export">Export</button>
 				  <button id="btn_import">Import</button>
+				  <input type="file" id="fileInput" style="display: none;" />
 			  </div>
-			  <input type="file" id="fileInput" style="display: none;" />
+			  <div>
+				  <label for="characterSelector">Character:</label>
+				  <select id="characterSelector" name="characterSelector">
+					  <option value="0">0</option>
+				  </select>
+				  <button id="btn_char_add">add</button>
+				  <button id="btn_char_delete">delete</button>
+			  </div>
 		  </div>
 		</div>
 		<div class="container">

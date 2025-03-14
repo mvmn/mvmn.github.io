@@ -1,6 +1,6 @@
 <html>
 	<head>
-		<title>☥ VtM char maker ☥</title>
+		<title>MVMn ☥ VtM char maker ☥</title>
 		<meta name="viewport" content="width=400">
 		<script 
 				src="https://code.jquery.com/jquery-3.3.1.slim.min.js" 
@@ -12,6 +12,18 @@
 				color: white;
 				font-family: serif;
 				margin-bottom: 0.25em;
+			}
+			
+			/* Responsive Design */
+			@media (max-width: 1000px) {
+			  .container {
+			    flex-direction: column; /* Stack columns vertically */
+			  }
+
+			  .column,
+			  .column2 {
+			    flex: 1; /* Full width */
+			  }
 			}
 			
 			@media print {

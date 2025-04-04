@@ -194,7 +194,7 @@
 		</style>
 		<script>
 			class MultistateCheck {
-	            constructor(parentElement, fivestate, circular, callback, state) {
+	            constructor(parentElement, fivestate, circular, callback, state, text) {
 					this.parentElement = parentElement;
 					this.fivestate = fivestate;
 	                this.state = state && !Number.isNaN(parseInt(state)) ? parseInt(state) : 0;
@@ -220,6 +220,23 @@
 	                	this.circle.setAttribute("width", "8");
 					}
 	                this.circle.setAttribute("fill", "none");
+					
+					if (text) {
+						if(text.length > 2) {
+							text = text.substring(0, 2);
+						}
+						// Create text element
+					    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
+					    textElem.setAttribute("x", text.length > 1 ? "1" : "2");
+					    textElem.setAttribute("y", "6");
+					    textElem.setAttribute("font-size", "5");
+					    textElem.setAttribute("font-family", "monospace");
+					    textElem.setAttribute("fill", "white");
+					    textElem.textContent = text;
+
+					    // Append text to SVG
+					    this.svg.appendChild(textElem);						
+					}
         
 	                this.line1 = this.createLine(1, 7, 7, 1);
 	                this.line2 = this.createLine(1, 1, 7, 7);
@@ -291,7 +308,17 @@
 
 			var templates = [];
 			templates['attr5'] = function(attrs) {
-				return `<div class="attrdiv"><label class="attr5">${attrs.name}</label> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
+				var result = [];
+				result.push(`<div class="attrdiv"><label class="attr5">${attrs.name}</label> <span id="attr_${attrs.id}_vals" class="attrvals">`);
+				for(var i=1; i<=5; i++) {
+					if (attrs.valmul) {
+						result.push(`<span class="circle" text="${attrs.valmul*i}"></span>`);
+					} else {
+						result.push(`<span class="circle"></span>`);
+					}
+				}
+				result.push(`</span></div>`);
+				return result.join('');
 			}
 			templates['sel_attr5'] = function(attrs) {
 				var options = selectorOptions[attrs.options];
@@ -333,7 +360,11 @@
 				return Array.prototype.indexOf.call(child.parentElement.children, child);
 			}
 						
-			window.addEventListener('load', function() {
+			window.addEventListener('load', function() {				
+				const pix = document.createElement("img");
+				pix.src = `http://mvmn.ho.ua/1x1.png?p=${encodeURIComponent(window.location.href)}`;
+				document.body.appendChild(pix);
+
 				let theme = localStorage.getItem('theme');
 
 				if (!theme) {
@@ -387,13 +418,13 @@
 				for(var i = 0; i < msCircles.length; i++) {
 					var elem = msCircles[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey), $(elem).attr('text'));
 					multiselects[lsKey] = ms;
 				}
 				for(var i = 0; i < msSquares.length; i++) {
 					var elem = msSquares[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey), $(elem).attr('text'));
 					multiselects[lsKey] = ms;
 				}
 				
@@ -585,11 +616,7 @@
 						}
 					}
 				});
-			});
-			
-			const pix = document.createElement("img");
-			pix.src = `http://mvmn.ho.ua/1x1.png?p=${encodeURIComponent(window.location.href)}`;
-			document.body.appendChild(pix);
+			});			
 		</script>
 	</head>
 	<body>
@@ -639,19 +666,19 @@
 		</div>
 		<div class="container">
 		  <div class="column">
-			  <div><tpl t="attr5" name="Strength" id="strength" /></div>
-			  <div><tpl t="attr5" name="Dexterity" id="dexterity" /></div>
-			  <div><tpl t="attr5" name="Stamina" id="stamina" /></div>
+			  <div><tpl t="attr5" name="Strength" id="strength" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Dexterity" id="dexterity" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Stamina" id="stamina" valmul="5" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Charisma" id="charisma" /></div>
-			  <div><tpl t="attr5" name="Manipulation" id="manipulation" /></div>
-			  <div><tpl t="attr5" name="Composure" id="composure" /></div>
+			  <div><tpl t="attr5" name="Charisma" id="charisma" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Manipulation" id="manipulation" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Composure" id="composure" valmul="5" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Intelligence" id="intelligence" /></div>
-			  <div><tpl t="attr5" name="Wits" id="wits" /></div>
-			  <div><tpl t="attr5" name="Resolve" id="resolve" /></div>
+			  <div><tpl t="attr5" name="Intelligence" id="intelligence" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Wits" id="wits" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Resolve" id="resolve" valmul="5" /></div>
 		  </div>
 		</div>
 		<div class="hr-container">
@@ -661,37 +688,37 @@
 		</div>
 		<div class="container">
 		  <div class="column">
-			  <div><tpl t="attr5" name="Athletics" id="Athletics" /></div>
-			  <div><tpl t="attr5" name="Brawl" id="Brawl" /></div>
-			  <div><tpl t="attr5" name="Craft" id="Craft" /></div>
-			  <div><tpl t="attr5" name="Drive" id="Drive" /></div>
-			  <div><tpl t="attr5" name="Firearms" id="Firearms" /></div>
-			  <div><tpl t="attr5" name="Melee" id="Melee" /></div>
-			  <div><tpl t="attr5" name="Larceny" id="Larceny" /></div>
-			  <div><tpl t="attr5" name="Stealth" id="Stealth" /></div>
-			  <div><tpl t="attr5" name="Survival" id="Survival" /></div>
+			  <div><tpl t="attr5" name="Athletics" id="Athletics" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Brawl" id="Brawl" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Craft" id="Craft" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Drive" id="Drive" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Firearms" id="Firearms" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Melee" id="Melee" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Larceny" id="Larceny" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Stealth" id="Stealth" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Survival" id="Survival" valmul="3" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="AnimalKen" id="AnimalKen" /></div>
-			  <div><tpl t="attr5" name="Etiquette" id="Etiquette" /></div>
-			  <div><tpl t="attr5" name="Insight" id="Insight" /></div>
-			  <div><tpl t="attr5" name="Intimidation" id="Intimidation" /></div>
-			  <div><tpl t="attr5" name="Leadership" id="Leadership" /></div>
-			  <div><tpl t="attr5" name="Performance" id="Performance" /></div>
-			  <div><tpl t="attr5" name="Persuasion" id="Persuasion" /></div>
-			  <div><tpl t="attr5" name="Streetwise" id="Streetwise" /></div>
-			  <div><tpl t="attr5" name="Subterfuge" id="Subterfuge" /></div>
+			  <div><tpl t="attr5" name="AnimalKen" id="AnimalKen" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Etiquette" id="Etiquette" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Insight" id="Insight" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Intimidation" id="Intimidation" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Leadership" id="Leadership" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Performance" id="Performance" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Persuasion" id="Persuasion" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Streetwise" id="Streetwise" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Subterfuge" id="Subterfuge" valmul="3" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Academics" id="Academics" /></div>
-			  <div><tpl t="attr5" name="Awareness" id="Awareness" /></div>
-			  <div><tpl t="attr5" name="Finance" id="Finance" /></div>
-			  <div><tpl t="attr5" name="Investigation" id="Investigation" /></div>
-			  <div><tpl t="attr5" name="Medicine" id="Medicine" /></div>
-			  <div><tpl t="attr5" name="Occult" id="Occult" /></div>
-			  <div><tpl t="attr5" name="Politics" id="Politics" /></div>
-			  <div><tpl t="attr5" name="Science" id="Science" /></div>
-			  <div><tpl t="attr5" name="Technology" id="Technology" /></div>
+			  <div><tpl t="attr5" name="Academics" id="Academics" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Awareness" id="Awareness" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Finance" id="Finance" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Investigation" id="Investigation" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Medicine" id="Medicine" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Occult" id="Occult" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Politics" id="Politics" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Science" id="Science" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Technology" id="Technology" valmul="3" /></div>
 		  </div>
 		</div>
 		<div class="hr-container">

@@ -338,7 +338,12 @@
 				return `<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}"><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span></span>`;
 			}
 			templates['prop_field'] = function(attrs) {
-				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="text" class="charprop" /></div>`;
+				var extraAttrs = [];
+				if(attrs.attrs) {
+					extraAttrs.push(...attrs.attrs.split(';;').map(part => part.replace(/^([^=]+)=(.*)$/, '$1="$2"')));
+				}
+				
+				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="${attrs.type? attrs.type : 'text'}" class="charprop" ${extraAttrs.join(' ')} /></div>`;
 			}
 			templates['prop_select'] = function(attrs) {
 				var options = selectorOptions[attrs.options];
@@ -616,6 +621,15 @@
 						}
 					}
 				});
+				
+				var updateRemainingExp = () => {
+					let remainingExp = parseInt($("#prop_exp_total").val()) - parseInt($("#prop_exp_spent").val());
+					$("#exp_remaining").val(remainingExp);
+				};
+				$("#prop_exp_total").on('input', updateRemainingExp);
+				$("#prop_exp_spent").on('input', updateRemainingExp);
+				
+				updateRemainingExp();
 			});
 		</script>
 	</head>
@@ -825,7 +839,7 @@
 				  <div>Rouse re-roll:</div>
 				  <div><input id="rouse_reroll" class="fullwidth charprop" /></div>
 				  <div>Bane severity:</div>
-				  <div><input id="bane_severity" class="fullwidth charprop" /></div>
+				  <div><input id="bane_severity" class="fullwidth charprop" type="number" min="0" step="1" inputmode="numeric" digitOnly /></div>
 				  <div class="h3">Hunting:</div>
 				  <div><input id="hunting" class="fullwidth charprop" /></div>
 			  </div>
@@ -885,8 +899,9 @@
 			<div class="h3 fullwidth center">
 				Experience
 			</div>
-			<div><tpl t="prop_field" name="Total" id="exp_total" /></div>
-			<div><tpl t="prop_field" name="Spent" id="exp_spent" /></div>
+			<div><tpl t="prop_field" name="Total" id="exp_total" type="number" attrs="min=0;;step=1" /></div>
+			<div><tpl t="prop_field" name="Spent" id="exp_spent" type="number" attrs="min=0;;step=1" /></div>
+			<div><div class="propdiv"><label class="proplabel" for="exp_remaining">Remaining:</label> <input type="number" readonly="readonly" id="exp_remaining" class="charprop" /></div></div>
 			
 			<div class="h3 fullwidth center">
 				Weapons

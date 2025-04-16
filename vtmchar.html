@@ -142,7 +142,7 @@
 				text-align: center;
 			}
 			
-			label.attr5 {
+			label.attr5, .attrdiv .spacer {
 				border-bottom: 1px dotted white;
 			}
 			
@@ -151,8 +151,12 @@
 				display: flex;
 			}
 			
-			.attrdiv select, .attrdiv label, .propdiv input, .propdiv select {
+			.attrdiv select, .attrdiv label, .propdiv input, .propdiv select, .attrspecfield, .attrdiv .spacer {
 				flex-grow: 1;
+			}
+			
+			.attrdiv label {
+				min-width: 8em;
 			}
 
 			.attrdiv .circle, .attrdiv .square, .propdiv label {
@@ -309,7 +313,11 @@
 			var templates = [];
 			templates['attr5'] = function(attrs) {
 				var result = [];
-				result.push(`<div class="attrdiv"><label class="attr5">${attrs.name}</label> <span id="attr_${attrs.id}_vals" class="attrvals">`);
+				result.push(`<div class="attrdiv"><label class="attr5">${attrs.name}</label>`);
+				if(attrs.allowspec) {
+					result.push(`<input id="attr_${attrs.id}_spec" class="charprop attrspecfield" /><span class="spacer"> </span>`);
+				}
+				result.push(`<span id="attr_${attrs.id}_vals" class="attrvals">`);
 				for(var i=1; i<=5; i++) {
 					if (attrs.valmul) {
 						result.push(`<span class="circle" text="${attrs.valmul*i}"></span>`);
@@ -658,19 +666,19 @@
 		</div>
 		<div class="container">
 		  <div class="column">
-			  <div><tpl t="prop_field" name="Name" id="name" /></div>
-			  <div><tpl t="prop_field" name="Concept" id="concept" /></div>
-			  <div><tpl t="prop_field" name="Chronicle" id="chronicle" /></div>
+			  <div><tpl t="prop_field"	name="Name"			id="name" /></div>
+			  <div><tpl t="prop_field"	name="Concept"		id="concept" /></div>
+			  <div><tpl t="prop_field"	name="Chronicle"	id="chronicle" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="prop_field" name="Ambition" id="ambition" /></div>
-			  <div><tpl t="prop_field" name="Desire" id="desire" /></div>
-			  <div><tpl t="prop_select" name="Predator" id="predator" options="predator_type" /></div>
+			  <div><tpl t="prop_field"	name="Ambition"		id="ambition" /></div>
+			  <div><tpl t="prop_field"	name="Desire"		id="desire" /></div>
+			  <div><tpl t="prop_select"	name="Predator"		id="predator" options="predator_type" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="prop_select" name="Clan" id="clan" options="clan" /></div>
-			  <div><tpl t="prop_field" name="Generation" id="generation" /></div>
-			  <div><tpl t="prop_field" name="Sire" id="sire" /></div>
+			  <div><tpl t="prop_select"	name="Clan"			id="clan" options="clan" /></div>
+			  <div><tpl t="prop_field"	name="Generation"	id="generation" /></div>
+			  <div><tpl t="prop_field"	name="Sire"			id="sire" /></div>
 		  </div>
 		</div>
 		<div class="hr-container">
@@ -680,19 +688,19 @@
 		</div>
 		<div class="container">
 		  <div class="column">
-			  <div><tpl t="attr5" name="Strength" id="strength" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Dexterity" id="dexterity" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Stamina" id="stamina" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Strength"		id="strength"		valmul="5" /></div>
+			  <div><tpl t="attr5" name="Dexterity"		id="dexterity"		valmul="5" /></div>
+			  <div><tpl t="attr5" name="Stamina"		id="stamina"		valmul="5" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Charisma" id="charisma" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Manipulation" id="manipulation" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Composure" id="composure" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Charisma"		id="charisma"		valmul="5" /></div>
+			  <div><tpl t="attr5" name="Manipulation"	id="manipulation"	valmul="5" /></div>
+			  <div><tpl t="attr5" name="Composure"		id="composure"		valmul="5" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Intelligence" id="intelligence" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Wits" id="wits" valmul="5" /></div>
-			  <div><tpl t="attr5" name="Resolve" id="resolve" valmul="5" /></div>
+			  <div><tpl t="attr5" name="Intelligence"	id="intelligence"	valmul="5" /></div>
+			  <div><tpl t="attr5" name="Wits"			id="wits"			valmul="5" /></div>
+			  <div><tpl t="attr5" name="Resolve"		id="resolve"		valmul="5" /></div>
 		  </div>
 		</div>
 		<div class="hr-container">
@@ -702,37 +710,37 @@
 		</div>
 		<div class="container">
 		  <div class="column">
-			  <div><tpl t="attr5" name="Athletics" id="Athletics" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Brawl" id="Brawl" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Craft" id="Craft" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Drive" id="Drive" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Firearms" id="Firearms" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Melee" id="Melee" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Larceny" id="Larceny" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Stealth" id="Stealth" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Survival" id="Survival" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Athletics"		id="Athletics"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Brawl"			id="Brawl"			valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Craft"			id="Craft"			valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Drive"			id="Drive"			valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Firearms"		id="Firearms"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Melee"			id="Melee"			valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Larceny"		id="Larceny"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Stealth"		id="Stealth"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Survival"		id="Survival"		valmul="3" allowspec="true" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="AnimalKen" id="AnimalKen" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Etiquette" id="Etiquette" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Insight" id="Insight" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Intimidation" id="Intimidation" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Leadership" id="Leadership" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Performance" id="Performance" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Persuasion" id="Persuasion" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Streetwise" id="Streetwise" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Subterfuge" id="Subterfuge" valmul="3" /></div>
+			  <div><tpl t="attr5" name="AnimalKen"		id="AnimalKen"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Etiquette"		id="Etiquette"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Insight"		id="Insight"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Intimidation"	id="Intimidation"	valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Leadership"		id="Leadership"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Performance"	id="Performance"	valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Persuasion"		id="Persuasion"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Streetwise"		id="Streetwise"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Subterfuge"		id="Subterfuge"		valmul="3" allowspec="true" /></div>
 		  </div>
 		  <div class="column">
-			  <div><tpl t="attr5" name="Academics" id="Academics" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Awareness" id="Awareness" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Finance" id="Finance" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Investigation" id="Investigation" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Medicine" id="Medicine" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Occult" id="Occult" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Politics" id="Politics" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Science" id="Science" valmul="3" /></div>
-			  <div><tpl t="attr5" name="Technology" id="Technology" valmul="3" /></div>
+			  <div><tpl t="attr5" name="Academics"		id="Academics"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Awareness"		id="Awareness"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Finance"		id="Finance"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Investigation"	id="Investigation"	valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Medicine"		id="Medicine"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Occult"			id="Occult"			valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Politics"		id="Politics"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Science"		id="Science"		valmul="3" allowspec="true" /></div>
+			  <div><tpl t="attr5" name="Technology"		id="Technology"		valmul="3" allowspec="true" /></div>
 		  </div>
 		</div>
 		<div class="hr-container">

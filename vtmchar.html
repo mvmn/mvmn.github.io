@@ -156,7 +156,7 @@
 			}
 			
 			.attrdiv label {
-				min-width: 8em;
+				min-width: 9em;
 			}
 
 			.attrdiv .circle, .attrdiv .square, .propdiv label {
@@ -166,6 +166,7 @@
 			
 			.attrvals {
 				margin-left: 5px;
+				white-space: nowrap;
 			}
 			
 			.proplabel {
@@ -201,6 +202,8 @@
 	            constructor(parentElement, fivestate, circular, callback, state, text) {
 					this.parentElement = parentElement;
 					this.fivestate = fivestate;
+					this.circular = circular;
+					this.text = text;
 	                this.state = state && !Number.isNaN(parseInt(state)) ? parseInt(state) : 0;
 	                this.container = document.createElement('div');
 	                this.container.classList.add('circle-container');
@@ -211,11 +214,22 @@
 						}
 					}
         
+					this.draw();
+
+	                parentElement.appendChild(this.container);
+	                this.updateState();
+	            }
+				
+				draw() {
+					if (this.svg) {
+						this.container.removeChild(this.svg);
+					}
+
 	                this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 	                this.svg.setAttribute("viewBox", "0 0 8 8");
         
-	                this.circle = document.createElementNS("http://www.w3.org/2000/svg", circular ? "circle" : "rect");
-					if (circular) {
+	                this.circle = document.createElementNS("http://www.w3.org/2000/svg", this.circular ? "circle" : "rect");
+					if (this.circular) {
 		                this.circle.setAttribute("cx", "4");
 		                this.circle.setAttribute("cy", "4");
 	                	this.circle.setAttribute("r", "4");
@@ -225,15 +239,16 @@
 					}
 	                this.circle.setAttribute("fill", "none");
 					
-					if (text) {
-						if(text.length > 2) {
-							text = text.substring(0, 2);
+					if (this.text) {
+						var text = this.text;
+						if (text.length > 3) {
+							text = text.substring(0, 3);
 						}
 						// Create text element
 					    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
-					    textElem.setAttribute("x", text.length > 1 ? "1" : "2");
+					    textElem.setAttribute("x", text.length > 2 ? "0" : text.length > 1 ? "1" : "2");
 					    textElem.setAttribute("y", "6");
-					    textElem.setAttribute("font-size", "5");
+					    textElem.setAttribute("font-size", text.length > 2 ? "4" : "5");
 					    textElem.setAttribute("font-family", "monospace");
 					    textElem.setAttribute("fill", "white");
 					    textElem.textContent = text;
@@ -246,8 +261,8 @@
 	                this.line2 = this.createLine(1, 1, 7, 7);
 	                this.line3 = this.createLine(0, 4, 8, 4);
         
-	                this.filledCircle = document.createElementNS("http://www.w3.org/2000/svg", circular ? "circle" : "rect");
-					if (circular) {
+	                this.filledCircle = document.createElementNS("http://www.w3.org/2000/svg", this.circular ? "circle" : "rect");
+					if (this.circular) {
 		                this.filledCircle.setAttribute("cx", "4");
 		                this.filledCircle.setAttribute("cy", "4");
 	                	this.filledCircle.setAttribute("r", "4");
@@ -260,9 +275,7 @@
         
 	                this.svg.append(this.circle, this.line1, this.line2, this.line3, this.filledCircle);
 	                this.container.appendChild(this.svg);
-	                parentElement.appendChild(this.container);
-	                this.updateState();
-	            }
+				}
 
 	            createLine(x1, y1, x2, y2) {
 	                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -275,7 +288,7 @@
 	            }
 
 	            toggleState() {
-					if(this.fivestate) {
+					if (this.fivestate) {
 	                	this.updateState((this.state + 1) % 5);
 					} else {
 						this.updateState(this.state == 0? 4 : 0);
@@ -284,7 +297,7 @@
 
 	            updateState(newState) {
 					this.state = newState && !Number.isNaN(parseInt(newState)) || 0 === newState ? parseInt(newState) : this.state;
-					if(!this.fivestate && this.state > 0) {
+					if (!this.fivestate && this.state > 0) {
 						this.state = 4;
 					}
 	                this.line1.classList.toggle("hidden", this.state < 1);
@@ -314,11 +327,11 @@
 			templates['attr5'] = function(attrs) {
 				var result = [];
 				result.push(`<div class="attrdiv"><label class="attr5">${attrs.name}</label>`);
-				if(attrs.allowspec) {
+				if (attrs.allowspec) {
 					result.push(`<input id="attr_${attrs.id}_spec" class="charprop attrspecfield" /><span class="spacer"> </span>`);
 				}
 				result.push(`<span id="attr_${attrs.id}_vals" class="attrvals">`);
-				for(var i=1; i<=5; i++) {
+				for (var i=1; i<=5; i++) {
 					if (attrs.valmul) {
 						result.push(`<span class="circle" text="${attrs.valmul*i}"></span>`);
 					} else {
@@ -328,6 +341,7 @@
 				result.push(`</span></div>`);
 				return result.join('');
 			}
+			
 			templates['sel_attr5'] = function(attrs) {
 				var options = selectorOptions[attrs.options];
 				var optionsHTMLs = [];
@@ -339,12 +353,26 @@
 				
 				return `<div class="attrdiv"><select id="attr_${attrs.id}" class="charprop">${optionsHTML}</select> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
 			}
+			
 			templates['circle5'] = function(attrs) {
-				return `<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span>`;
+				
+				var result = [`<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}">`];
+				for(var i=1; i<=5; i++) {
+					if (attrs.valmul) {
+						var offset = attrs.offset ? parseInt(attrs.offset) : 0;
+						result.push(`<span class="circle" text="${offset + attrs.valmul*i}"></span>`);
+					} else {
+						result.push(`<span class="circle"></span>`);
+					}
+				}				
+				
+				return result.join("");
 			}
+			
 			templates['square5'] = function(attrs) {
 				return `<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}"><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span><span class="square"></span></span>`;
 			}
+			
 			templates['prop_field'] = function(attrs) {
 				var extraAttrs = [];
 				if(attrs.attrs) {
@@ -353,6 +381,7 @@
 				
 				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="${attrs.type? attrs.type : 'text'}" class="charprop" ${extraAttrs.join(' ')} /></div>`;
 			}
+			
 			templates['prop_select'] = function(attrs) {
 				var options = selectorOptions[attrs.options];
 				var optionsHTMLs = [];
@@ -827,8 +856,8 @@
 			 </div>
 			 <div class="fullwidth center h3">Blood potency</div>
 			 <div class="fullwidth center">
-				   <span><tpl t="circle5" id="bloodp1" /></span>
-				   <span><tpl t="circle5" id="bloodp2" /></span>
+				   <span><tpl t="circle5" id="bloodp1" valmul="10" /></span>
+				   <span><tpl t="circle5" id="bloodp2" valmul="10" offset="50" /></span>
 			 </div>
 	 		<div class="container">
 	 		  <div class="column">

@@ -600,7 +600,7 @@
 					const blob = new Blob([jsonString], { type: 'application/json' });
 					const link = document.createElement('a');
 					link.href = URL.createObjectURL(blob);
-					link.download = 'vtmchar '+$("#prop_name").val()+'.json';
+					link.download = 'vtmchar ' + $("#prop_name").val() + ' - ' + new Date().toLocaleString() + '.json';
 					link.click();
 				});
 				

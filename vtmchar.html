@@ -198,6 +198,25 @@
 			}
 		</style>
 		<script>
+			window.eventHandlers = {};
+			
+			function fireEvent(event, data) {
+				console.log("event "+event+" - data: "+JSON.stringify(data));
+				if (eventHandlers[event]) {
+					var handlers = eventHandlers[event];
+					for(var i in handlers) {
+						handlers[i](data);
+					}
+				}
+			}
+			
+			function regHandler(event, handler) {
+				if (!eventHandlers[event]) {
+					eventHandlers[event] = [];
+				}
+				eventHandlers[event].push(handler);
+			}
+			
 			class MultistateCheck {
 	            constructor(parentElement, fivestate, circular, callback, state, text) {
 					this.parentElement = parentElement;
@@ -240,21 +259,7 @@
 	                this.circle.setAttribute("fill", "none");
 					
 					if (this.text) {
-						var text = this.text;
-						if (text.length > 3) {
-							text = text.substring(0, 3);
-						}
-						// Create text element
-					    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
-					    textElem.setAttribute("x", text.length > 2 ? "0" : text.length > 1 ? "1" : "2");
-					    textElem.setAttribute("y", "6");
-					    textElem.setAttribute("font-size", text.length > 2 ? "4" : "5");
-					    textElem.setAttribute("font-family", "monospace");
-					    textElem.setAttribute("fill", "white");
-					    textElem.textContent = text;
-
-					    // Append text to SVG
-					    this.svg.appendChild(textElem);						
+						this.setText(this.text);					
 					}
         
 	                this.line1 = this.createLine(1, 7, 7, 1);
@@ -275,6 +280,25 @@
         
 	                this.svg.append(this.circle, this.line1, this.line2, this.line3, this.filledCircle);
 	                this.container.appendChild(this.svg);
+				}
+				
+				setText(text) {
+					this.text = text;
+					if (text.length > 3) {
+						text = text.substring(0, 3);
+					}
+					// Create text element
+				    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
+				    textElem.setAttribute("x", text.length > 2 ? "0" : text.length > 1 ? "1" : "2");
+				    textElem.setAttribute("y", "6");
+				    textElem.setAttribute("font-size", text.length > 2 ? "4" : "5");
+				    textElem.setAttribute("font-family", "monospace");
+				    textElem.setAttribute("fill", "white");
+				    textElem.textContent = text;
+
+					this.svg.querySelectorAll('text').forEach(textEl => textEl.remove());
+				    // Append text to SVG
+				    this.svg.appendChild(textElem);					
 				}
 
 	            createLine(x1, y1, x2, y2) {
@@ -320,7 +344,27 @@
 				'flaws': ["", "Archaic: Archaic", "Archaic: Living in the Past", "Bonding: Bondslave", "Bonding: Bond Junkie", "Bonding: Long Bond", "Blood Ties: Bondslave", "Caitiff: Befouling Vitae", "Caitiff: Clan Curse", "Caitiff: Debt Peon", "Caitiff: Liquidator", "Caitiff: Muddled Blood", "Caitiff: Walking Omen", "Caitiff: Word-Scarred", "Contagion: Disease Vector", "Contagion: Plaugebringer", "Diablerie: Blatant Diablerist", "Diablerie: Inherited Bane", "Feeding: Farmer", "Feeding: Organovore", "Feeding: Methuselah's Thirst", "Feeding: Prey Exclusion", "Feeding: Vein Tapper", "Ghoul: Crone's Curse", "Ghoul: Distressing Fangs", "Linguistics: Illiterate", "Looks: Stench", "Looks: Transparent", "Looks: Ugly", "Looks: Repulsive", "Looks: Unblinking Visage", "Mythic: Stake Bait", "Mythic: Folkloric Bane", "Mythic: Folkloric Block", "Mythic: Starving Decay", "Mythic: Stigmata", "Mythic: Twice Cursed", "Other: Knowledge Hungry", "Other: Prestation Debts", "Other: Risk Taker", "Other: Weak-Willed", "Psychological: Beacon of Profanity", "Psychological: Crisis of Faith", "Psychological: Groveling Worm", "Psychological: Horrible Scars of Penitence", "Psychological: Living on the Edge", "Psychological: Weak-Willed", "Substance Use: Hopeless Addiction", "Substance Use: Addiction", "Supernatural: Two Masters", "Thin-blood: Baby Teeth", "Thin-blood: Heliophobia", "Thin-blood: Bestial Temper", "Thin-blood: Branded by the Camarilla", "Thin-blood: Clan Curse", "Thin-blood: Mortal Frailty", "Thin-blood: Dead Flesh", "Thin-blood: Night Terrors", "Thin-blood: Plague Bearer", "Thin-blood: Sloppy Drinker", "Thin-blood: Sun-Faded", "Thin-blood: Supernatural Tell", "Thin-blood: Shunned by the Anarchs", "Thin-blood: Twilight Presence", "Thin-blood: Unending Hunger", "Thin-blood: Vitae Dependency", "Allies: Enemy", "Fame: Dark Secret", "Fame: Infamy", "Influence: Disliked", "Influence: Despised", "Herd: Obvious Predator", "Mask: Known Corpse", "Mask: Known Blankbody", "Mawla: Adversary", "Mawla: Secret Master", "Resources: Destitute", "Retainers: Stalkers", "Status: Suspect", "Status: Shunned"],
 				'havenmods': ["", "+ Hidden Armory", "+ Business Establishment", "+ Cell", "+ Furcus", "+ Watchmen", "+ Laboratory", "+ Library", "+ Machine Shop", "+ Location", "+ Luxury", "+ Postern", "+ Security System", "+ Surgery", "+ Warding", "- Compromised", "- Creepy", "- Haunted", "- Shared"],
 				'predator_type': ["Alleycat", "Bagger", "Blood Leech", "Cleaver", "Consensualist", "Extortionist", "Farmer", "Graverobber", "Grim Reaper", "Montero", "Osiris", "Pursuer", "Sandman", "Roadside Killer", "Scene Queen", "Siren", "Trapdoor"],
-				'clan': [ "BanuHaqim", "Brujah", "Caitiff", "Gangrel", "Hecata", "Giovanni", "Lamiae", "Lasombra", "Malkavian", "Nagaraja", "Nosferatu", "Ravnos", "Salubri", "Samedi", "Toreador", "Tremere", "Tzimisce", "Ventrue", "TheMinistry", "Thin-Blood" ]
+				'clan': [ "Thin-Blood", "Caitiff", "Banu Haqim", "Brujah", "Gangrel", "Hecata", "Lasombra", "Malkavian", "Nosferatu", "Ravnos", "Salubri", "Toreador", "Tremere", "Tzimisce", "Ventrue", "Giovanni", "Lamiae", "Nagaraja", "Samedi", "The Ministry" ]
+			}
+			
+			var disciplineClans = {
+				"": [],
+				"Animalism": ["Gangrel", "Nosferatu", "Ravnos", "Tzimisce"],
+				"Auspex": ["Malkavian", "Salubri", "Toreador", "Tremere"],
+				"Blood Sorcery": ["Banu Haqim", "Tremere"],
+				"Celerity": ["Banu Haqim", "Brujah", "Toreador"],
+				"Chimerstry": ["Ravnos"],
+				"Dominate": ["Lasombra", "Malkavian", "Salubri", "Tremere", "Tzimisce", "Ventrue"],
+				"Fortitude": ["Gangrel", "Hecata", "Salubri", "Ventrue"],
+				"Obfuscate": ["Banu Haqim", "Hecata", "Malkavian", "Nosferatu", "Ravnos"],
+				"Oblivion": ["Hecata", "Lasombra"],
+				"Potence": ["Brujah", "Lasombra", "Nosferatu"],
+				"Presence": ["Brujah", "Toreador", "Ventrue"],
+				"Protean": ["Gangrel", "Tzimisce"],
+				"Thin-blood Alchemy": ["Thin-Blood"],
+				"Fixatio": [],
+				"Athanor Corporis": [],
+				"Calcinatio": []
 			}
 
 			var templates = [];
@@ -333,7 +377,8 @@
 				result.push(`<span id="attr_${attrs.id}_vals" class="attrvals">`);
 				for (var i=1; i<=5; i++) {
 					if (attrs.valmul) {
-						result.push(`<span class="circle" text="${attrs.valmul*i}"></span>`);
+						var offset = attrs.offset ? parseInt(attrs.offset) : 0;
+						result.push(`<span class="circle" text="${offset + attrs.valmul*i}"></span>`);
 					} else {
 						result.push(`<span class="circle"></span>`);
 					}
@@ -351,7 +396,17 @@
 				}
 				var optionsHTML = optionsHTMLs.join("\n");
 				
-				return `<div class="attrdiv"><select id="attr_${attrs.id}" class="charprop">${optionsHTML}</select> <span id="attr_${attrs.id}_vals" class="attrvals"><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span><span class="circle"></span></span></div>`;
+				var circlesHtml = [];
+				for (var i=1; i<=5; i++) {
+					if (attrs.valmul) {
+						var offset = attrs.offset ? parseInt(attrs.offset) : 0;
+						circlesHtml.push(`<span class="circle" text="${offset + attrs.valmul*i}"></span>`);
+					} else {
+						circlesHtml.push(`<span class="circle"></span>`);
+					}
+				}
+				
+				return `<div class="attrdiv"><select id="attr_${attrs.id}" class="charprop">${optionsHTML}</select>&nbsp;<button onclick="addval('attr_${attrs.id}')">+</button> <span id="attr_${attrs.id}_vals" class="attrvals">${circlesHtml.join('')}</span></div>`;
 			}
 			
 			templates['circle5'] = function(attrs) {
@@ -391,11 +446,29 @@
 				}
 				var optionsHTML = optionsHTMLs.join("\n");
 				
-				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <select id="prop_${attrs.id}" class="charprop">${optionsHTML}</select></div>`;
+				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <select id="prop_${attrs.id}" class="charprop">${optionsHTML}</select>&nbsp;<button onclick="addval('prop_${attrs.id}')">+</button></div>`;
 			}
 			
 			templates['5row'] = function(attrs) {
 				return `<ol class="disciplines"><li><input id="propinp1_${attrs.id}" class="charprop" /></li><li><input id="propinp2_${attrs.id}" class="charprop"/></li><li><input id="propinp3_${attrs.id}" class="charprop"/></li><li><input id="propinp4_${attrs.id}" class="charprop"/></li><li><input id="propinp5_${attrs.id}" class="charprop"/></li></ol>`;
+			}
+			
+			function addval(selectId) {
+				var value = window.prompt('Custom value:');
+				if (value) {
+					addOption(selectId, value, true);
+				}
+			}
+			
+			function addOption(selectId, value, triggerChange) {
+				$("#"+selectId).val(value);
+				if($("#"+selectId).val() != value) {
+					$("#"+selectId).append(new Option(value, value));
+					$("#"+selectId).val(value);
+					if (triggerChange) {
+						$("#"+selectId).trigger('change');
+					}
+				}
 			}
 			
 			function childIndex(child) {
@@ -460,24 +533,52 @@
 				for(var i = 0; i < msCircles.length; i++) {
 					var elem = msCircles[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', true, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey), $(elem).attr('text'));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', true, (elem, state) => {
+						var msKey = getMultiSelectKey(elem.parentElement);
+						localStorage.setItem(msKey, state);
+						fireEvent("inputchange", {
+							"type": $(elem).parent().attr('fivestate') == 'true' ? 'fivestate' : 'prop', 
+							"subtype": "circle",
+							"key": msKey, 
+							"element": elem.parentElement.parentElement,
+							"subelement": elem,
+							"id": $(elem).parent().parent().attr('id')
+						});
+					}, localStorage.getItem(lsKey), $(elem).attr('text'));
 					multiselects[lsKey] = ms;
 				}
 				for(var i = 0; i < msSquares.length; i++) {
 					var elem = msSquares[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => localStorage.setItem(getMultiSelectKey(elem.parentElement), state), localStorage.getItem(lsKey), $(elem).attr('text'));
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => { 						var msKey = getMultiSelectKey(elem.parentElement);
+						localStorage.setItem(msKey, state);
+						fireEvent("inputchange", {
+							"type": $(elem).parent().attr('fivestate') == 'true' ? 'fivestate' : 'prop',
+							"subtype": "square",
+							"key": msKey, 
+							"element": elem.parentElement.parentElement,
+							"subelement": elem,
+							"id": $(elem).parent().parent().attr('id')
+						});
+						
+					}, localStorage.getItem(lsKey), $(elem).attr('text'));
 					multiselects[lsKey] = ms;
 				}
 				
 				// Inputs change handle
 				var changeHandle = el => {
 					var id = el.target.attributes['id'].value;
-					if ($(el.target).is(':checkbox')) {
+					var isCheckbox = $(el.target).is(':checkbox');
+					if (isCheckbox) {
 						localStorage.setItem("Prop_" + id, $(el.target).prop("checked"));
 					} else {
 						localStorage.setItem("Prop_" + id, $(el.target).val());
 					}
+					fireEvent("inputchange", {
+						id, 
+						"element": el.target,
+						"type": isCheckbox ? 'checkbox' : 'input'
+					});
 				};
 				
 				$(".charprop").on('change', changeHandle);
@@ -491,6 +592,9 @@
 							$(v).prop("checked", propVal && (propVal === true || propVal.toString().toLowerCase() === "true"));
 						} else {
 							$(v).val(propVal);
+							if ($(v).val() != propVal && $(v).prop("tagName").toLowerCase() == 'select') {
+								addOption($(v).prop("id"), propVal);
+							}
 						}
 					}
 				});
@@ -531,14 +635,16 @@
 						} else if(key.startsWith("Prop_")) {
 							var id = key.substring("Prop_".length);
 							var elementToSet = $("#"+id);
-							if($(elementToSet).is(':checkbox')) {
+							if(elementToSet.is(':checkbox')) {
 								elementToSet.prop("checked", val && (val === true || val.toString().toLowerCase() === "true"));
 							} else {
 								elementToSet.val(val);
+								if (elementToSet.val() != val && elementToSet.prop("tagName").toLowerCase() == 'select') {
+									addOption(id, val);
+								}
 							}
 						}
 					}
-					updateRemainingExp();
 				}
 				
 				function saveChar() {
@@ -584,6 +690,7 @@
 							console.log(importedObject);
 							loadChar(importedObject);
 							localStorage.setItem("charstash_" + window.currentChar, JSON.stringify(importedObject));
+							fireEvent('newchar');
 				         };
 
 				         reader.onerror = function(e) {
@@ -607,6 +714,7 @@
 				$("#btn_clear").on("click", () => {
 					if (window.confirm("Are you sure?")) {
 						clearChar();
+						fireEvent('newchar');
 					}
 				});
 				
@@ -622,6 +730,7 @@
 					$('#characterSelector option').eq(nextOptionNumber).prop('selected', true);
 					window.currentChar = nextOptionNumber;
 					localStorage.setItem('currentChar', window.currentChar);
+					fireEvent('newchar');
 				});
 				
 				$("#characterSelector").on("change", () => {
@@ -634,6 +743,7 @@
 					}
 					window.currentChar = selectedValue;
 					localStorage.setItem('currentChar', window.currentChar);
+					fireEvent('newchar');
 				});
 				
 				$("#btn_char_delete").on("click", () => {
@@ -657,17 +767,65 @@
 						if (stashedChar) {
 							loadChar(stashedChar);
 						}
+						fireEvent('newchar');
 					}
 				});
 				
 				var updateRemainingExp = () => {
-					let remainingExp = parseInt($("#prop_exp_total").val()) - parseInt($("#prop_exp_spent").val());
+					var totalExp = parseInt($("#prop_exp_total").val()) || 0;
+					var spentExp = parseInt($("#prop_exp_spent").val()) || 0;
+					let remainingExp = totalExp - spentExp;
 					$("#exp_remaining").val(remainingExp);
 				};
 				$("#prop_exp_total").on('input', updateRemainingExp);
 				$("#prop_exp_spent").on('input', updateRemainingExp);
 				
 				updateRemainingExp();
+				regHandler('newchar', updateRemainingExp);
+				updateDisciplinePrices();
+			});
+			
+			function updateDisciplinePrices() {
+				for (var i=1; i<=6; i++) {
+					updateDisciplinePrice(i);
+				}
+			}
+			
+			function updateDisciplinePrice(disciplineIndex) {
+				var clan = $("#prop_clan").val();
+				var discipline = $("#attr_dis" + disciplineIndex).val();
+				var values = ["", "", "", "", ""];
+				if (discipline) {
+					var clans = disciplineClans[discipline];
+					if (!clans) {
+						clans = [];
+					}
+					var isClan = clans.includes(clan);						
+					if (isClan) {
+						values = ["5", "10", "15", "20", "25"];
+					} else {
+						if (clan == 'Caitiff') {
+							values = ["6", "12", "18", "24", "30"];							
+						} else {
+							values = ["7", "14", "21", "28", "35"];
+						}
+					}
+				}
+				for (var i=0; i<values.length; i++) {
+					multiselects["MSProp_attr_dis"+disciplineIndex+"_vals#"+i].setText(values[i]);
+				}
+			}
+			
+			regHandler('newchar', updateDisciplinePrices);
+			regHandler('inputchange', function(data) {
+				if(data.id == 'prop_clan') {
+					updateDisciplinePrices();
+				}
+			});
+			regHandler('inputchange', function(data) {
+				if(data.id.startsWith('attr_dis')) {
+					updateDisciplinePrices();
+				}
 			});
 		</script>
 	</head>
@@ -905,13 +1063,13 @@
 			<div class="h3 fullwidth center">
 				Merits
 			</div>
-			<div><tpl t="sel_attr5" options="merits" id="merit1" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit2" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit3" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit4" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit5" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit6" /></div>
-			<div><tpl t="sel_attr5" options="merits" id="merit7" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit1" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit2" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit3" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit4" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit5" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit6" valmul="0" offset="3" /></div>
+			<div><tpl t="sel_attr5" options="merits" id="merit7" valmul="0" offset="3" /></div>
 			
 			<div class="h3 fullwidth center">
 				Flaws

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Selector</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 2rem;
+    }
+    #games-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.5rem;
+    }
+    .game {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .game.selected {
+      background-color: yellow;
+    }
+    #counter {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    #screenshot {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: #333;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="games-container">
+    <!-- Games injected here -->
+  </div>
+
+  <div id="counter">0 selected</div>
+  <button id="screenshot">📸 Screenshot</button>
+
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script>
+    const games = `Age of Empires
+Alien Isolation
+Alien vs Predator
+Amnesia
+Among Us
+Animal Crossing
+Anno
+Apex Legends
+ARK: Survival Evolved
+Assassin's Creed
+Baldur's Gate
+Banished
+Banjo-Kazooie
+Battlefield
+Battlezone
+Bayonetta
+BioShock
+Bomberman
+Borderlands
+Braid
+Breath of Fire
+Bulletstorm
+Burnout
+Call of Duty
+Castlevania
+Celeste
+Chrono series
+Civilization
+Command & Conquer / Red Alert
+Contra
+Control
+Cossacks
+Counter-Strike
+Crash Bandicoot
+Crysis
+Cyberpunk 2077
+Dance Dance Revolution
+Dark Souls
+Darkest Dungeon
+Dead or Alive
+Dead Space
+Death Stranding
+Deus Ex
+Devil May Cry
+Diablo
+Disco Elysium
+Dishonored
+Divinity: Original Sin
+Donkey Kong
+Doom
+Dota
+Dragon Age
+Dragon Quest
+Drakengard
+Driver (San Francisco)
+Duck Hunt
+Duke Nukem
+EarthBound
+Elite / Frontier / Freelancer
+EVE Online
+F-Zero
+Fable
+Factorio
+Fallout
+Far Cry
+Final Fantasy
+Fire Emblem
+Fortnite
+Forza Horizon
+Frostpunk
+Gears of War
+God of War
+Gran Turismo
+Grand Theft Auto
+Guilty Gear
+Guitar Hero / Rock Band
+Hades
+Half-Life
+Halo
+Harvest Moon
+Heretic / Hexen
+Heroes of Might and Magic
+Hitman
+Hollow Knight
+Jak and Daxter
+Kerbal Space Program / Simple Planes
+Killzone
+Kingdom Come
+Kingdom Hearts
+League of Legends
+Little Nightmares
+Mana series / Seiken Densetsu (e.g. Secret of Mana, Trials of Mana)
+Manhunt
+Mass Effect
+Master of Magic
+Max Payne
+Medal of Honor
+Mega Man
+Metal Gear
+Metro
+Metroid
+Minecraft
+Monster Hunter
+Mortal Kombat
+Need for Speed
+Neverwinter Nights
+Nier
+Ninja Gaiden
+No Man's Sky
+Outer Wilds
+Overwatch
+Papers, Please
+Parasite Eve
+Path of Exile
+Persona
+Phantasy Star
+Pikmin
+Pillars of Eternity
+Pokémon
+Portal
+Prey
+Prince of Persia
+PUBG
+Punch-Out
+Ratchet & Clank
+Rayman
+Red Dead Redemption
+Resident Evil
+RuneScape
+S.T.A.L.K.E.R.
+SaGa
+Saints Row
+Shadow Hearts
+Shenmue
+Shin Megami Tensei
+Silent Hill
+Sim City / Cities in Motion / Cities: Skylines / Cities XXL
+Slay the Spire
+Sonic the Hedgehog
+Soul Calibur
+Spelunky
+Spyro the Dragon
+Star Fox
+Starcraft
+Stardew Valley
+Street Fighter
+Super Mario Bros.
+Syndicate
+System Shock
+Tales series (e.g. Tales of Symphonia)
+Team Fortress
+Tekken
+Tetris
+The Elder Scrolls
+The Last of Us
+The Legend of Zelda
+The Sims
+The Witcher
+Titanfall
+Tomb Raider
+Tony Hawk's Pro Skater
+Total War
+Transport Tycoon / Locomotion / Sid Meier's Railroads / Railway Empire
+Turok
+Twisted Metal
+Uncharted
+Undertale
+Unreal Tournament
+Valheim
+Valorant
+Vampire the Masquerade: Bloodlines / Redemption
+Warcraft
+Warhammer
+Watch Dogs
+Wild Arms
+Wolfenstein
+Worms
+X / X2 / X3 / X4
+X-Com / XCOM
+Yakuza`.split('\n');
+
+    const container = document.getElementById('games-container');
+    const counter = document.getElementById('counter');
+
+    function updateCounter() {
+      const selected = document.querySelectorAll('.game.selected').length;
+      counter.textContent = `${selected} of ${games.length} selected`;
+    }
+
+    games.forEach(game => {
+      const div = document.createElement('div');
+      div.textContent = game;
+      div.className = 'game';
+      div.addEventListener('click', () => {
+        div.classList.toggle('selected');
+        updateCounter();
+      });
+      container.appendChild(div);
+    });
+
+    updateCounter();
+
+    document.getElementById('screenshot').addEventListener('click', () => {
+      html2canvas(document.body).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'selected-games.png';
+        link.href = canvas.toDataURL();
+        link.click();
+      });
+    });
+  </script>
+</body>
+</html>

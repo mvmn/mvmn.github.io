@@ -75,6 +75,7 @@ Breath of Fire
 Bulletstorm
 Burnout
 Call of Duty
+Carmageddon
 Castlevania
 Celeste
 Chrono series
@@ -87,7 +88,7 @@ Counter-Strike
 Crash Bandicoot
 Crysis
 Cyberpunk 2077
-Dance Dance Revolution
+Dance Dance Revolution / Just Dance
 Dark Souls
 Darkest Dungeon
 Dead or Alive
@@ -118,6 +119,7 @@ Fallout
 Far Cry
 Final Fantasy
 Fire Emblem
+FIFA / NFL / NBA
 Fortnite
 Forza Horizon
 Frostpunk
@@ -136,6 +138,7 @@ Heroes of Might and Magic
 Hitman
 Hollow Knight
 Jak and Daxter
+Just Dance
 Kerbal Space Program / Simple Planes
 Killzone
 Kingdom Come
@@ -175,10 +178,12 @@ Prey
 Prince of Persia
 PUBG
 Punch-Out
+Quake
 Ratchet & Clank
 Rayman
 Red Dead Redemption
 Resident Evil
+Rocket League
 RuneScape
 S.T.A.L.K.E.R.
 SaGa
@@ -232,35 +237,50 @@ X / X2 / X3 / X4
 X-Com / XCOM
 Yakuza`.split('\n');
 
-    const container = document.getElementById('games-container');
-    const counter = document.getElementById('counter');
+const container = document.getElementById('games-container');
+ const counter = document.getElementById('counter');
+ const localKey = 'selectedGames';
 
-    function updateCounter() {
-      const selected = document.querySelectorAll('.game.selected').length;
-      counter.textContent = `${selected} of ${games.length} selected`;
-    }
+ // Load previously selected games from localStorage
+ const savedSelection = JSON.parse(localStorage.getItem(localKey) || '[]');
+ const selectedSet = new Set(savedSelection);
 
-    games.forEach(game => {
-      const div = document.createElement('div');
-      div.textContent = game;
-      div.className = 'game';
-      div.addEventListener('click', () => {
-        div.classList.toggle('selected');
-        updateCounter();
-      });
-      container.appendChild(div);
-    });
+ function updateCounter() {
+   const selected = document.querySelectorAll('.game.selected').length;
+   counter.textContent = `${selected} of ${games.length} selected`;
+ }
 
-    updateCounter();
+ function saveSelection() {
+   const selected = [...document.querySelectorAll('.game.selected')].map(el => el.dataset.name);
+   localStorage.setItem(localKey, JSON.stringify(selected));
+ }
 
-    document.getElementById('screenshot').addEventListener('click', () => {
-      html2canvas(document.body).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'selected-games.png';
-        link.href = canvas.toDataURL();
-        link.click();
-      });
-    });
+ games.forEach(game => {
+   const div = document.createElement('div');
+   div.textContent = game;
+   div.dataset.name = game;
+   div.className = 'game';
+   if (selectedSet.has(game)) div.classList.add('selected');
+
+   div.addEventListener('click', () => {
+     div.classList.toggle('selected');
+     updateCounter();
+     saveSelection();
+   });
+
+   container.appendChild(div);
+ });
+
+ updateCounter();
+
+ document.getElementById('screenshot').addEventListener('click', () => {
+   html2canvas(document.body).then(canvas => {
+     const link = document.createElement('a');
+     link.download = 'selected-games.png';
+     link.href = canvas.toDataURL();
+     link.click();
+   });
+ });
   </script>
 </body>
 </html>

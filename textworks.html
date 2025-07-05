@@ -1,0 +1,110 @@
+<html>
+<head>
+  <title>MVMn TextWorks</title>
+  <script>
+    // Flip character map
+    const flipMap = {
+      // Latin lowercase
+      'a': 'ɐ', 'b': 'q', 'c': 'ɔ', 'd': 'p', 'e': 'ǝ',
+      'f': 'ɟ', 'g': 'ƃ', 'h': 'ɥ', 'i': 'ᴉ', 'j': 'ɾ',
+      'k': 'ʞ', 'l': 'ʃ', 'm': 'ɯ', 'n': 'u', 'o': 'o',
+      'p': 'd', 'q': 'b', 'r': 'ɹ', 's': 's', 't': 'ʇ',
+      'u': 'n', 'v': 'ʌ', 'w': 'ʍ', 'x': 'x', 'y': 'ʎ',
+      'z': 'z',
+
+      // Latin uppercase
+      'A': '∀', 'B': '𐐒', 'C': 'Ɔ', 'D': 'ᗡ', 'E': 'Ǝ',
+      'F': 'Ⅎ', 'G': '⅁', 'H': 'H', 'I': 'I', 'J': 'ſ',
+      'K': 'ʞ', 'L': '˥', 'M': 'W', 'N': 'N', 'O': 'O',
+      'P': 'Ԁ', 'Q': 'Ό', 'R': 'ᴚ', 'S': 'S', 'T': '⊥',
+      'U': '∩', 'V': 'Λ', 'W': 'M', 'X': 'X', 'Y': '⅄',
+      'Z': 'Z',
+
+      // Numbers
+      '0': '0', '1': 'Ɩ', '2': 'ᄅ', '3': 'Ɛ', '4': 'ㄣ',
+      '5': 'ϛ', '6': '9', '7': 'ㄥ', '8': '8', '9': '6',
+
+      // Punctuation
+      '.': '˙', ',': "'", "'": ',', '"': '„', '`': ',',
+      '!': '¡', '?': '¿', '(': ')', ')': '(',
+      '[': ']', ']': '[', '{': '}', '}': '{',
+      '<': '>', '>': '<', '&': '⅋', '_': '‾',
+
+      // Cyrillic lowercase (your custom mapping)
+      'а': 'ɐ', 'б': 'ƍ', 'в': 'ʚ', 'г': 'ɹ', 'ґ': 'ɹ',
+      'д': 'ɓ', 'е': 'ǝ', 'є': 'з', 'ж': 'ж', 'з': 'ε',
+      'и': 'и', 'і': '!', 'ї': 'l̤', 'й': 'ņ', 'к': 'ʞ',
+      'л': 'v', 'м': 'w', 'н': 'н', 'о': 'о', 'п': 'u',
+      'р': 'd', 'с': 'ɔ', 'т': 'ɯ', 'у': 'ʎ', 'ф': 'ȸ',
+      'х': 'х', 'ц': 'ǹ', 'ч': 'Һ', 'ш': 'm', 'щ': 'm',
+      'ь': 'q', 'ю': 'oı', 'я': 'ʁ',
+		
+      // Cyrillic lowercase (your custom mapping)
+      'А': 'ɐ', 'Б': 'ƍ', 'В': 'ʚ', 'Г': 'ɹ', 'Ґ': 'ґ',
+      'Д': 'ɓ', 'Е': 'ǝ', 'Є': 'з', 'Ж': 'ж', 'З': 'ε',
+      'И': 'и', 'І': '!', 'Ї': 'l̤', 'Й': 'ņ', 'К': 'ʞ',
+      'Л': 'v', 'М': 'w', 'Н': 'н', 'О': 'о', 'П': 'u',
+      'Р': 'd', 'С': 'ɔ', 'Т': 'ɯ', 'У': 'ʎ', 'Ф': 'ȸ',
+      'Х': 'х', 'Ц': 'ǹ', 'Ч': 'Һ', 'Ш': 'm', 'Щ': 'm',
+      'Ь': 'q', 'Ю': 'oı', 'Я': 'ʁ'
+    };
+
+    function flipText(text) {
+      return text
+        .split('')
+        .reverse()
+        .map(char => flipMap[char] || char)
+        .join('');
+    }
+
+    window.onload = function () {
+      const input = document.getElementById("input");
+      const output = document.getElementById("output");
+
+      input.addEventListener("input", () => {
+        output.value = flipText(input.value);
+      });
+    };
+	
+	window.onload = function () {
+	      const input = document.getElementById("input");
+	      const output = document.getElementById("output");
+
+	      // Update output only on change
+	      input.addEventListener("keyup", () => {
+	        output.value = flipText(input.value);
+	      });
+	    };
+  </script>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: monospace;
+      padding: 20px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 200pt;
+      background-color: #111;
+      color: #0f0;
+      border: 1px solid #333;
+      font-family: monospace;
+      padding: 10px;
+    }
+    div {
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div>Текст:</div>
+    <div><textarea id="input" placeholder="Введіть текст сюди..."></textarea></div>
+  </div>
+  <div>
+    <div>Перевернутий текст:</div>
+    <div><textarea id="output" readonly></textarea></div>
+  </div>
+</body>
+</html>

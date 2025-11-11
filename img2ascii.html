@@ -1,0 +1,126 @@
+<html>
+<body>
+<span id="measureSpan" style="visibility:hidden; position:absolute; white-space:pre; font-family:monospace;">M</span>
+
+<input type="text" id="chars" value=" `.-':_,^=;><+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&@"
+style="width: 45%">
+<select id="charsSelect" style="width: 45%">
+	<option> `.-':_,^=;&gt;&lt;+!rc*/z?sLTv)J7(|Fi{C}fI31tlu[neoZ5Yxjya]2ESwqkP6h9d4VpOGbUAKXHm8RD#$Bg0MNWQ%&amp;@</option>
+	<option> .'`^\&quot;,:;Il!i&gt;&lt;~+_-?][}{1)(|\/tfjrxnuvczqpdbkhaowm*XYUJCLQ0OZ#WM&amp;8%B@$</option>
+	<option> .:-=+*#%@</option>
+	<option> .&#x002e;&#x258f;&#x258e;&#x258d;&#x258c;&#x258b;&#x258a;&#x2589;&#x2588;</option>
+</select>
+<br/>
+<!-- Max size slider -->
+Max size: <input type="range" id="maxsize" min="10" max="500" value="100" oninput="this.nextElementSibling.value = this.value"  style="min-width: 300px">
+<output>100</output> |
+Invert: <input type="checkbox" id="invertRamp"> |
+<!-- Brightness slider -->
+Brightness: <input type="range" id="brightness" min="-100" max="100" value="0" oninput="this.nextElementSibling.value = this.value" style="min-width: 300px">
+<output>0</output> |
+
+<!-- Contrast slider -->
+Contrast: <input type="range" id="contrast" min="-100" max="100" value="0" oninput="this.nextElementSibling.value = this.value"  style="min-width: 300px">
+<output>0</output> |
+
+<input type="file" id="fileInput" accept="image/*">
+<hr/>
+<textarea id="textout" spellcheck="false"  style="font-family: monospace; width: 100%; min-height: 1000px"></textarea>
+
+<script>
+const span = document.getElementById("measureSpan");
+const measureWidth = span.offsetWidth;
+const measureHeight = span.offsetHeight;
+const correction = measureHeight / measureWidth;
+
+async function processImageFile(file) {
+  const img = await loadImageFromFile(file);
+  const charsToUse = document.getElementById("chars").value;
+
+  const maxSize = parseInt(document.getElementById('maxsize').value);
+  const brightnessAdjust = parseInt(document.getElementById('brightness').value);
+  const contrastAdjust = parseInt(document.getElementById('contrast').value);
+  const invertRamp = document.getElementById('invertRamp').checked;
+
+  const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+  const newWidth = Math.round(img.width * scale);
+  const newHeight = Math.round((img.height * scale)/ correction);
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = newWidth;
+  canvas.height = newHeight;
+  ctx.drawImage(img, 0, 0, newWidth, newHeight);
+
+  const { data, width, height } = ctx.getImageData(0, 0, newWidth, newHeight);
+  const result = [];
+  const contrastFactor = (259 * (contrastAdjust + 255)) / (255 * (259 - contrastAdjust));
+
+  // Iterate over every pixel
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      let r = data[i];
+      let g = data[i + 1];
+      let b = data[i + 2];
+
+      // Compute perceived brightness
+      let brightness = (0.2126 * r + 0.7152 * g + 0.0722 * b);
+
+      // Apply brightness adjustment
+      brightness += brightnessAdjust; 
+	  brightness = Math.max(0, Math.min(255, brightness));
+
+      // Apply contrast adjustment
+      // Formula: newValue = ((brightness - 128) * contrastFactor) + 128
+      brightness = ((brightness - 128) * contrastFactor) + 128;
+
+      // Clamp between 0 and 255
+      brightness = Math.max(0, Math.min(255, brightness));
+
+      // Map to ASCII character
+	  var idx = charsToUse.length - 1 - Math.floor((brightness / 255) * (charsToUse.length-1));
+      if (invertRamp) {
+        idx = charsToUse.length - 1 - idx;
+      }
+	  
+      result.push(charsToUse.charAt(idx));
+    }
+    result.push('\n');
+  }
+
+  document.getElementById('textout').value = result.join('');
+}
+
+// Helper: load file into image
+function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function work() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return;
+  await processImageFile(file);
+}
+
+// Hook up events
+document.getElementById('fileInput').addEventListener('change', work);
+document.getElementById('maxsize').addEventListener('input', work);
+document.getElementById('brightness').addEventListener('input', work);
+document.getElementById('contrast').addEventListener('input', work);
+document.getElementById('invertRamp').addEventListener('change', work);
+document.getElementById('chars').addEventListener('keyup', work);
+document.getElementById('charsSelect').addEventListener('change', e=>{
+	const select = document.getElementById("charsSelect");
+	const selectedText = select.selectedOptions[0].text;
+	document.getElementById("chars").value = " " + selectedText;
+	work();
+});
+</script>
+</body>
+</html>

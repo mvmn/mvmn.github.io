@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<!-- Generated with ChatGPT (mostly) -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Solar Year Circle</title>
+<style>
+  body {
+    margin: 0;
+    background: #0e1116;
+    color: #e6e6eb;
+    font-family: system-ui, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+  }
+  canvas {
+    display: block;
+    background: #0e1116;
+  }
+  .status {
+    position: absolute;
+    top: 1rem;
+    opacity: 0.85;
+    font-size: 0.9rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="status" id="status">Locating…</div>
+<canvas id="wheel"></canvas>
+
+<script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+<script>
+/* ---------- utilities ---------- */
+
+function isLeapYear(y) {
+  return new Date(y,1,29).getDate() === 29;
+}
+
+function yearDayLengths(lat, lon, year) {
+  const days = isLeapYear(year) ? 366 : 365;
+  const arr = [];
+
+  for (let d = 1; d <= days; d++) {
+    const date = new Date(year, 0, d);
+    const t = SunCalc.getTimes(date, lat, lon);
+    let h = (t.sunset - t.sunrise) / 36e5;
+
+    if (!isFinite(h)) {
+      const m = date.getMonth();
+      const summer = lat >= 0 ? (m >= 3 && m <= 8) : !(m >= 3 && m <= 8);
+      h = summer ? 24 : 0;
+    }
+    arr.push(h);
+  }
+  return arr;
+}
+
+function doyToDate(year, doy) {
+  const d = new Date(year, 0, doy - 1); // Jan 1 = doy 1
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+
+function dayOfYear(date) {
+  const start = new Date(date.getFullYear(), 0, 0);
+  return Math.floor((date - start) / 86400000);
+}
+
+// Meeus equinox/solstice calculation
+function equinoxSolsticeDates(year) {
+  const Y = (year - 2000) / 1000;
+  const JDE0 = {
+    spring: 2451623.80984 + 365242.37404 * Y + 0.05169 * Math.pow(Y,2) - 0.00411 * Math.pow(Y,3) - 0.00057 * Math.pow(Y,4),
+    summer: 2451716.56767 + 365241.62603 * Y + 0.00325 * Math.pow(Y,2) + 0.00888 * Math.pow(Y,3) - 0.00030 * Math.pow(Y,4),
+    autumn: 2451810.21715 + 365242.01767 * Y - 0.11575 * Math.pow(Y,2) + 0.00337 * Math.pow(Y,3) + 0.00078 * Math.pow(Y,4),
+    winter: 2451900.05952 + 365242.74049 * Y - 0.06223 * Math.pow(Y,2) - 0.00823 * Math.pow(Y,3) + 0.00032 * Math.pow(Y,4)
+  };
+
+  const jdeToDate = (jde) => {
+    const Z = Math.floor(jde + 0.5);
+    const F = (jde + 0.5) - Z;
+    const alpha = Math.floor((Z - 1867216.25) / 36524.25);
+    const A = Z + 1 + alpha - Math.floor(alpha / 4);
+    const B = A + 1524;
+    const C = Math.floor((B - 122.1) / 365.25);
+    const D = Math.floor(365.25 * C);
+    const E = Math.floor((B - D) / 30.6001);
+    const day = B - D - Math.floor(30.6001 * E) + F;
+    const month = (E < 14 ? E - 1 : E - 13);
+    const yearAdj = (month > 2 ? C - 4716 : C - 4715);
+    const dayInt = Math.floor(day);
+    const dayFrac = day - dayInt;
+    const secs = Math.round(dayFrac * 86400);
+    const hours = Math.floor(secs / 3600);
+    const mins = Math.floor((secs % 3600) / 60);
+    const secsRem = secs % 60;
+    return new Date(Date.UTC(yearAdj, month - 1, dayInt, hours, mins, secsRem));
+  };
+
+  return {
+    spring: jdeToDate(JDE0.spring),
+    summer: jdeToDate(JDE0.summer),
+    autumn: jdeToDate(JDE0.autumn),
+    winter: jdeToDate(JDE0.winter)
+  };
+}
+
+const seasonEvents = (year) => {
+  const eq = equinoxSolsticeDates(year);
+  return [
+    { name: "Spring Equinox", date: eq.spring },
+    { name: "Summer Solstice", date: eq.summer },
+    { name: "Autumn Equinox", date: eq.autumn },
+    { name: "Winter Solstice", date: eq.winter }
+  ];
+};
+
+// Example fixed festivals (optional)
+const festivals = [
+  { name: "Yule",       doy: 355 },
+  { name: "Imbolc",     doy: 34  },
+  { name: "Ostara",     doy: 79  },
+  { name: "Beltane",    doy: 121 },
+  { name: "Litha",      doy: 172 },
+  { name: "Lughnasadh", doy: 213 },
+  { name: "Mabon",      doy: 266 },
+  { name: "Samhain",    doy: 305 }
+];
+
+/* ---------- responsive canvas ---------- */
+
+function resizeCanvas(canvas) {
+  const size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
+  canvas.width = size;
+  canvas.height = size;
+  return size;
+}
+
+/* ---------- rendering ---------- */
+
+function renderWheel(canvas, data, year) {
+  const ctx = canvas.getContext("2d");
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  const labelMargin = canvas.width * 0.1; // ~8% for labels
+  const totalThickness = canvas.width * 0.14; // ring thickness
+  const radius = canvas.width / 2 - totalThickness / 2 - labelMargin;
+
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.lineCap = "butt";
+  ctx.font = `${Math.floor(canvas.width*0.02)}px system-ui`;
+  ctx.fillStyle = "#e6e6eb";
+  ctx.strokeStyle = "#888";
+
+  data.forEach((dayHours, i) => {
+    const nightHours = 24 - dayHours;
+    const dayFrac = dayHours / 24;
+    const dayThickness = totalThickness * dayFrac;
+    const nightThickness = totalThickness - dayThickness;
+    const angle0 = (2 * Math.PI * i) / data.length - Math.PI / 2;
+    const angle1 = (2 * Math.PI * (i+1)) / data.length - Math.PI / 2;
+
+    // Night (inner)
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius - totalThickness/2 + nightThickness/2, angle0, angle1);
+    ctx.strokeStyle = "#2b6cb0";
+    ctx.lineWidth = nightThickness;
+    ctx.stroke();
+
+    // Day (outer)
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius + totalThickness/2 - dayThickness/2, angle0, angle1);
+    ctx.strokeStyle = "#f59e0b";
+    ctx.lineWidth = dayThickness;
+    ctx.stroke();
+  });
+  
+  // --- Current day marker ---
+  const today = new Date();
+  if (today.getFullYear() === year) {
+	  const yearLength = isLeapYear(year) ? 366 : 365;
+	  const dayWidth = 2 * Math.PI / yearLength; 
+	  
+	  const doyToday = dayOfYear(today);
+	  const angle0 = (2*Math.PI*(doyToday-1)/yearLength) - Math.PI/2;
+	  const angle1 = angle0 + dayWidth;
+
+	  ctx.beginPath();
+	  ctx.arc(cx, cy, radius, angle0, angle1);
+	  ctx.strokeStyle = "#22c55e"; // green
+	  ctx.lineWidth = totalThickness*1.2; // thickness of marker
+	  ctx.stroke();
+	  
+	  // Draw label inside circle
+	  const label = `You are here (${new Date().getDate()}/${new Date().getMonth()+1})`;
+	  const labelRadius = radius * 0.38; // inside the circle
+	  const labelAngle = angle0 + dayWidth/2; // middle of marker
+
+	  ctx.save();
+	  ctx.translate(cx + Math.cos(labelAngle) * labelRadius,
+	                cy + Math.sin(labelAngle) * labelRadius);
+	  ctx.rotate(labelAngle + Math.PI); // parallel to diameter through marker
+	  ctx.fillStyle = "#22c55e";
+	  ctx.font = `${Math.floor(canvas.width*0.025)}px system-ui`;
+	  ctx.textAlign = "center";
+	  ctx.textBaseline = "middle";
+	  ctx.fillText(label, 0, 0);
+	  ctx.restore();
+  }
+
+  // Fixed festivals
+  festivals.forEach(f => {
+    const angle = (2*Math.PI*f.doy/data.length) - Math.PI/2;
+    const r0 = radius - totalThickness/2 - labelMargin/2 - 30;
+	const r1 = radius + totalThickness/2 + labelMargin/2 - 30; // radial line length
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
+    ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const label = `${f.name} (${doyToDate(year, f.doy)})`;
+	const lx = cx + Math.cos(angle) * (r1 + labelMargin/2);
+	const ly = cy + Math.sin(angle) * (r1 + labelMargin/2);
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle + Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+
+  // Equinox/solstice events
+  const events = seasonEvents(year);
+  events.forEach(evt => {
+    const doy = dayOfYear(evt.date);
+    const angle = (2*Math.PI*doy/data.length) - Math.PI/2;
+    const r0 = radius - totalThickness/2 - labelMargin/2-30;
+    const r1 = radius + totalThickness/2 + labelMargin/2-30;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
+    ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const label = `${evt.name} (${evt.date.toLocaleDateString()})`;
+    const lx = cx + Math.cos(angle)*(r1 + labelMargin*0.04);
+    const ly = cy + Math.sin(angle)*(r1 + labelMargin*0.04);
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle + Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+
+  // center dot
+  ctx.beginPath();
+  ctx.arc(cx, cy, canvas.width*0.005, 0, Math.PI*2);
+  ctx.fillStyle = "#fff";
+  ctx.fill();
+}
+
+/* ---------- main ---------- */
+
+const status = document.getElementById("status");
+const canvas = document.getElementById("wheel");
+const year = new Date().getFullYear();
+let currentData = [];
+
+function draw() {
+  resizeCanvas(canvas);
+  if (currentData.length) renderWheel(canvas, currentData, year);
+}
+
+navigator.geolocation.getCurrentPosition(
+  pos => {
+    const { latitude, longitude } = pos.coords;
+    status.textContent = `${year}`;
+    currentData = yearDayLengths(latitude, longitude, year);
+    draw();
+  },
+  err => {
+    status.textContent = "Location denied";
+    console.error(err);
+  }
+);
+
+window.addEventListener('resize', draw);
+</script>
+
+</body>
+</html>

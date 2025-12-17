@@ -163,6 +163,32 @@ function resizeCanvas(canvas) {
   return size;
 }
 
+function getHoverDay(evt, canvas, data, radius, totalThickness) {
+  const rect = canvas.getBoundingClientRect();
+  const mx = evt.clientX - rect.left;
+  const my = evt.clientY - rect.top;
+
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+
+  const dx = mx - cx;
+  const dy = my - cy;
+
+  const dist = Math.sqrt(dx*dx + dy*dy);
+
+  const innerR = radius - totalThickness / 2;
+  const outerR = radius + totalThickness / 2;
+
+  if (dist < innerR || dist > outerR) return null;
+
+  let angle = Math.atan2(dy, dx) + Math.PI / 2;
+  if (angle < 0) angle += Math.PI * 2;
+
+  const day = Math.floor(angle / (2*Math.PI) * data.length);
+  return day;
+}
+
+
 /* ---------- rendering ---------- */
 
 function renderWheel(canvas, data, year) {
@@ -331,11 +357,88 @@ function renderWheel(canvas, data, year) {
     ctx.restore();
   });
 
+  /* ---------- HOVER HIGHLIGHT ---------- */
+
+  if (hoverDayIndex !== null) {
+    const dayHours = data[hoverDayIndex];
+    const nightHours = 24 - dayHours;
+
+    const dayFrac = dayHours / 24;
+    const dayThickness = totalThickness * dayFrac;
+    const nightThickness = totalThickness - dayThickness;
+
+    const a0 = (2*Math.PI*hoverDayIndex)/data.length - Math.PI/2;
+    const a1 = (2*Math.PI*(hoverDayIndex+1))/data.length - Math.PI/2;
+
+    // Highlight night
+    ctx.beginPath();
+    ctx.arc(cx, cy,
+      radius - totalThickness/2 + nightThickness/2,
+      a0, a1);
+    ctx.strokeStyle = "#60a5fa";
+    ctx.lineWidth = nightThickness;
+    ctx.stroke();
+
+    // Highlight day
+    ctx.beginPath();
+    ctx.arc(cx, cy,
+      radius + totalThickness/2 - dayThickness/2,
+      a0, a1);
+    ctx.strokeStyle = "#fde68a";
+    ctx.lineWidth = dayThickness;
+    ctx.stroke();
+  }
+
+  /* ---------- HOVER LABEL ---------- */
+
+  if (hoverDayIndex !== null) {
+    const date = new Date(year, 0, hoverDayIndex + 1);
+    const dayH = data[hoverDayIndex];
+    const nightH = 24 - dayH;
+
+    const fmt = h => {
+      const m = Math.round((h % 1) * 60);
+      return `${Math.floor(h)}h ${m}m`;
+    };
+
+    const label = [
+      date.toLocaleDateString(undefined, { month: "long", day: "numeric" }),
+      `Day: ${fmt(dayH)}`,
+      `Night: ${fmt(nightH)}`
+    ];
+
+    ctx.font = `${Math.floor(canvas.width*0.022)}px system-ui`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const angle =
+      (2*Math.PI*hoverDayIndex)/data.length - Math.PI/2;
+
+    const labelRadius = radius - totalThickness/2 - canvas.width*0.12;
+
+    ctx.save();
+    ctx.translate(
+      cx + Math.cos(angle)*labelRadius,
+      cy + Math.sin(angle)*labelRadius
+    );
+    ctx.rotate(angle);
+
+    ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+    ctx.fillRect(-90, -40, 180, 80);
+
+    ctx.fillStyle = "#e5e7eb";
+    label.forEach((line, i) => {
+      ctx.fillText(line, 0, -20 + i*20);
+    });
+
+    ctx.restore();
+  }
+
 
   // center dot
   ctx.beginPath();
   ctx.arc(cx, cy, canvas.width*0.005, 0, Math.PI*2);
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = "#666";
   ctx.fill();
 }
 
@@ -366,6 +469,25 @@ navigator.geolocation.getCurrentPosition(
 );
 
 window.addEventListener('resize', draw);
+
+canvas.addEventListener("mousemove", e => {
+  if (!currentData.length) return;
+
+  const labelMargin = canvas.width * 0.1;
+  const totalThickness = canvas.width * 0.14;
+  const radius =
+    canvas.width/2 - totalThickness/2 - labelMargin;
+
+  hoverDayIndex = getHoverDay(
+    e, canvas, currentData, radius, totalThickness
+  );
+  draw();
+});
+
+canvas.addEventListener("mouseleave", () => {
+  hoverDayIndex = null;
+  draw();
+});
 </script>
 
 </body>

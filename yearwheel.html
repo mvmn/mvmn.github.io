@@ -71,6 +71,28 @@ function dayOfYear(date) {
   return Math.floor((date - start) / 86400000);
 }
 
+const monthNames = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
+
+function monthStartDOYs(year) {
+  const starts = [];
+  for (let m = 0; m < 12; m++) {
+    starts.push(dayOfYear(new Date(year, m, 1)));
+  }
+  return starts;
+}
+
+function monthMidDOY(year, month) {
+  const start = dayOfYear(new Date(year, month, 1));
+  const end =
+    month === 11
+      ? (isLeapYear(year) ? 366 : 365)
+      : dayOfYear(new Date(year, month + 1, 1));
+  return Math.floor((start + end) / 2);
+}
+
 // Meeus equinox/solstice calculation
 function equinoxSolsticeDates(year) {
   const Y = (year - 2000) / 1000;
@@ -208,7 +230,7 @@ function renderWheel(canvas, data, year) {
 	                cy + Math.sin(labelAngle) * labelRadius);
 	  ctx.rotate(labelAngle + Math.PI); // parallel to diameter through marker
 	  ctx.fillStyle = "#22c55e";
-	  ctx.font = `${Math.floor(canvas.width*0.025)}px system-ui`;
+	  ctx.font = `${Math.floor(canvas.width*0.020)}px system-ui`;
 	  ctx.textAlign = "center";
 	  ctx.textBaseline = "middle";
 	  ctx.fillText(label, 0, 0);
@@ -224,7 +246,7 @@ function renderWheel(canvas, data, year) {
     ctx.beginPath();
     ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
     ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
-    ctx.strokeStyle = "#888";
+    ctx.strokeStyle = "#8F8";
     ctx.lineWidth = 1;
     ctx.stroke();
 
@@ -268,6 +290,47 @@ function renderWheel(canvas, data, year) {
     ctx.fillText(label, 0, 0);
     ctx.restore();
   });
+  
+  const monthStarts = monthStartDOYs(year);
+
+  monthStarts.forEach(doy => {
+    const angle = (2 * Math.PI * doy) / data.length - Math.PI / 2;
+
+    const r0 = radius - totalThickness / 2 - 6;
+    const r1 = radius + totalThickness / 2 + 6;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * r0, cy + Math.sin(angle) * r0);
+    ctx.lineTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+  
+  /* ---------- MONTH LABELS ---------- */
+
+  ctx.font = `${Math.floor(canvas.width * 0.028)}px system-ui`;
+  ctx.fillStyle = "#000"; // muted gray-blue
+
+  monthNames.forEach((name, m) => {
+    const doy = monthMidDOY(year, m);
+    const angle = (2 * Math.PI * doy) / data.length - Math.PI / 2;
+
+    // Position inside the circle
+    const labelRadius = radius - totalThickness / 2 + canvas.width * 0.08;
+
+    const lx = cx + Math.cos(angle) * labelRadius;
+    const ly = cy + Math.sin(angle) * labelRadius;
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle); // parallel to diameter
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(name, 0, 0);
+    ctx.restore();
+  });
+
 
   // center dot
   ctx.beginPath();
@@ -275,6 +338,7 @@ function renderWheel(canvas, data, year) {
   ctx.fillStyle = "#fff";
   ctx.fill();
 }
+
 
 /* ---------- main ---------- */
 

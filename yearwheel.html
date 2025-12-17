@@ -36,7 +36,8 @@
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script>
 /* ---------- utilities ---------- */
-
+	var hoverDayIndex = -1;
+	
 function isLeapYear(y) {
   return new Date(y,1,29).getDate() === 29;
 }
@@ -262,6 +263,22 @@ function renderWheel(canvas, data, year) {
 	  ctx.fillText(label, 0, 0);
 	  ctx.restore();
   }
+  
+  const monthStarts = monthStartDOYs(year);
+
+  monthStarts.forEach(doy => {
+    const angle = (2 * Math.PI * doy) / data.length - Math.PI / 2;
+
+    const r0 = radius - totalThickness / 2 - 6;
+    const r1 = radius + totalThickness / 2 + 6;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * r0, cy + Math.sin(angle) * r0);
+    ctx.lineTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
 
   // Fixed festivals
   festivals.forEach(f => {
@@ -315,22 +332,6 @@ function renderWheel(canvas, data, year) {
     ctx.textBaseline = "middle";
     ctx.fillText(label, 0, 0);
     ctx.restore();
-  });
-  
-  const monthStarts = monthStartDOYs(year);
-
-  monthStarts.forEach(doy => {
-    const angle = (2 * Math.PI * doy) / data.length - Math.PI / 2;
-
-    const r0 = radius - totalThickness / 2 - 6;
-    const r1 = radius + totalThickness / 2 + 6;
-
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(angle) * r0, cy + Math.sin(angle) * r0);
-    ctx.lineTo(cx + Math.cos(angle) * r1, cy + Math.sin(angle) * r1);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 1;
-    ctx.stroke();
   });
   
   /* ---------- MONTH LABELS ---------- */
@@ -438,7 +439,7 @@ function renderWheel(canvas, data, year) {
   // center dot
   ctx.beginPath();
   ctx.arc(cx, cy, canvas.width*0.005, 0, Math.PI*2);
-  ctx.fillStyle = "#666";
+  ctx.fillStyle = "#888";
   ctx.fill();
 }
 

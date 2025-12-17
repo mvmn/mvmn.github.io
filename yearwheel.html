@@ -68,9 +68,15 @@ function doyToDate(year, doy) {
 
 
 function dayOfYear(date) {
-  const start = new Date(date.getFullYear(), 0, 0);
-  return Math.floor((date - start) / 86400000);
+  const start = Date.UTC(date.getFullYear(), 0, 0);
+  const current = Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
+  return Math.floor((current - start) / 86400000);
 }
+
 
 const monthNames = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -243,7 +249,7 @@ function renderWheel(canvas, data, year) {
 
 	  ctx.beginPath();
 	  ctx.arc(cx, cy, radius, angle0, angle1);
-	  ctx.strokeStyle = "#22c55e"; // green
+	  ctx.strokeStyle = "#22f55e"; // green
 	  ctx.lineWidth = totalThickness*1.2; // thickness of marker
 	  ctx.stroke();
 	  
@@ -256,7 +262,7 @@ function renderWheel(canvas, data, year) {
 	  ctx.translate(cx + Math.cos(labelAngle) * labelRadius,
 	                cy + Math.sin(labelAngle) * labelRadius);
 	  ctx.rotate(labelAngle + Math.PI); // parallel to diameter through marker
-	  ctx.fillStyle = "#22c55e";
+	  ctx.fillStyle = "#22f55e";
 	  ctx.font = `${Math.floor(canvas.width*0.020)}px system-ui`;
 	  ctx.textAlign = "center";
 	  ctx.textBaseline = "middle";
@@ -267,7 +273,7 @@ function renderWheel(canvas, data, year) {
   const monthStarts = monthStartDOYs(year);
 
   monthStarts.forEach(doy => {
-    const angle = (2 * Math.PI * doy) / data.length - Math.PI / 2;
+    const angle = (2 * Math.PI * (doy - 1)) / data.length - Math.PI / 2;
 
     const r0 = radius - totalThickness / 2 - 6;
     const r1 = radius + totalThickness / 2 + 6;
@@ -281,30 +287,45 @@ function renderWheel(canvas, data, year) {
   });
 
   // Fixed festivals
-  festivals.forEach(f => {
-    const angle = (2*Math.PI*f.doy/data.length) - Math.PI/2;
-    const r0 = radius - totalThickness/2 - labelMargin/2 - 30;
-	const r1 = radius + totalThickness/2 + labelMargin/2 - 30; // radial line length
+  /* ---------- FESTIVAL DAY MARKERS ---------- */
 
+  const yearLength = isLeapYear(year) ? 366 : 365;
+  const dayWidth = 2 * Math.PI / yearLength;
+
+  festivals.forEach(f => {
+    const dayIndex = f.doy - 2;
+    const angle0 =
+      (2 * Math.PI * dayIndex) / yearLength - Math.PI / 2;
+    const angle1 = angle0 + dayWidth;
+
+    // Thick arc covering the full ring
     ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
-    ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
-    ctx.strokeStyle = "#8F8";
-    ctx.lineWidth = 1;
+    ctx.arc(cx, cy, radius, angle0, angle1);
+    ctx.strokeStyle = "#86effc"; // soft green
+    ctx.lineWidth = totalThickness * 1.05;
     ctx.stroke();
 
+    // Label
+    const labelAngle = angle0 + dayWidth / 2;
+    const labelRadius =
+      radius + totalThickness / 2 + labelMargin * 0.55;
+
     const label = `${f.name} (${doyToDate(year, f.doy)})`;
-	const lx = cx + Math.cos(angle) * (r1 + labelMargin/2);
-	const ly = cy + Math.sin(angle) * (r1 + labelMargin/2);
 
     ctx.save();
-    ctx.translate(lx, ly);
-    ctx.rotate(angle + Math.PI/2);
+    ctx.translate(
+      cx + Math.cos(labelAngle) * labelRadius,
+      cy + Math.sin(labelAngle) * labelRadius
+    );
+    ctx.rotate(labelAngle + Math.PI / 2);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.fillStyle = "#86effc";
+    ctx.font = `${Math.floor(canvas.width * 0.018)}px system-ui`;
     ctx.fillText(label, 0, 0);
     ctx.restore();
   });
+
 
   // Equinox/solstice events
   const events = seasonEvents(year);
@@ -322,8 +343,8 @@ function renderWheel(canvas, data, year) {
     ctx.stroke();
 
     const label = `${evt.name} (${evt.date.toLocaleDateString()})`;
-    const lx = cx + Math.cos(angle)*(r1 + labelMargin*0.04);
-    const ly = cy + Math.sin(angle)*(r1 + labelMargin*0.04);
+    const lx = cx + Math.cos(angle)*(r1 + labelMargin*0.15);
+    const ly = cy + Math.sin(angle)*(r1 + labelMargin*0.15);
 
     ctx.save();
     ctx.translate(lx, ly);

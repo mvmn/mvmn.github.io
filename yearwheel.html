@@ -286,6 +286,34 @@ function renderWheel(canvas, data, year) {
     ctx.stroke();
   });
 
+  // Equinox/solstice events
+  const events = seasonEvents(year);
+  events.forEach(evt => {
+    const doy = dayOfYear(evt.date);
+    const angle = (2*Math.PI*doy/data.length) - Math.PI/2;
+    const r0 = (radius - totalThickness/2 - labelMargin/2)/5;
+    const r1 = radius + totalThickness/2 + labelMargin/2-30;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
+    ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
+    ctx.strokeStyle = "#888";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    const label = `${evt.name} (${evt.date.toLocaleDateString()})`;
+    const lx = cx + Math.cos(angle)*(r1 + labelMargin*0.15);
+    const ly = cy + Math.sin(angle)*(r1 + labelMargin*0.15);
+
+    ctx.save();
+    ctx.translate(lx, ly);
+    ctx.rotate(angle + Math.PI/2);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+  
   // Fixed festivals
   /* ---------- FESTIVAL DAY MARKERS ---------- */
 
@@ -322,35 +350,6 @@ function renderWheel(canvas, data, year) {
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#86effc";
     ctx.font = `${Math.floor(canvas.width * 0.018)}px system-ui`;
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
-  });
-
-
-  // Equinox/solstice events
-  const events = seasonEvents(year);
-  events.forEach(evt => {
-    const doy = dayOfYear(evt.date);
-    const angle = (2*Math.PI*doy/data.length) - Math.PI/2;
-    const r0 = radius - totalThickness/2 - labelMargin/2-30;
-    const r1 = radius + totalThickness/2 + labelMargin/2-30;
-
-    ctx.beginPath();
-    ctx.moveTo(cx + Math.cos(angle)*r0, cy + Math.sin(angle)*r0);
-    ctx.lineTo(cx + Math.cos(angle)*r1, cy + Math.sin(angle)*r1);
-    ctx.strokeStyle = "#888";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    const label = `${evt.name} (${evt.date.toLocaleDateString()})`;
-    const lx = cx + Math.cos(angle)*(r1 + labelMargin*0.15);
-    const ly = cy + Math.sin(angle)*(r1 + labelMargin*0.15);
-
-    ctx.save();
-    ctx.translate(lx, ly);
-    ctx.rotate(angle + Math.PI/2);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
     ctx.fillText(label, 0, 0);
     ctx.restore();
   });

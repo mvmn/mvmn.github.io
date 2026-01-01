@@ -22,21 +22,27 @@
   }
   .status {
     position: absolute;
-    top: 1rem;
+    top: 3rem;
     opacity: 0.85;
     font-size: 0.9rem;
+  }
+  .yearSelect {
+      position: absolute;
+      top: 1rem;
+      opacity: 0.85;
+      font-size: 0.9rem;
   }
 </style>
 </head>
 <body>
-
+<div class="yearSelect"><select id="years" onchange="javascript:onYearChange()"></select></div>
 <div class="status" id="status">Locating…</div>
 <canvas id="wheel"></canvas>
 
 <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
 <script>
 /* ---------- utilities ---------- */
-	var hoverDayIndex = -1;
+var hoverDayIndex = -1;
 	
 function isLeapYear(y) {
   return new Date(y,1,29).getDate() === 29;
@@ -208,6 +214,11 @@ function renderWheel(canvas, data, year) {
   const radius = canvas.width / 2 - totalThickness / 2 - labelMargin;
 
 
+  try {
+	  ctx.reset();
+  } catch(e) {
+	  console.log(e);
+  }
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.lineCap = "butt";
   ctx.font = `${Math.floor(canvas.width*0.02)}px system-ui`;
@@ -468,8 +479,14 @@ function renderWheel(canvas, data, year) {
 
 const status = document.getElementById("status");
 const canvas = document.getElementById("wheel");
-const year = new Date().getFullYear();
+var year = new Date().getFullYear();
 let currentData = [];
+
+var yearOptions = [];
+for(var i=year-10;i<=year+10;i++) {
+	yearOptions.push('<option value='+i+' '+(i==year?'selected="true"':'')+'>'+i+'</option>');
+}
+document.getElementById("years").innerHTML = yearOptions.join("\n");
 
 function draw() {
   resizeCanvas(canvas);
@@ -509,6 +526,12 @@ canvas.addEventListener("mouseleave", () => {
   hoverDayIndex = null;
   draw();
 });
+
+function onYearChange() {
+	year = this.document.getElementById("years").value;
+	status.textContent = year;
+	draw();
+}
 </script>
 
 </body>

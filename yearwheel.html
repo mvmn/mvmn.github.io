@@ -232,7 +232,7 @@ function renderWheel(canvas, data, year) {
     const nightThickness = totalThickness - dayThickness;
     const angle0 = (2 * Math.PI * i) / data.length - Math.PI / 2;
     const angle1 = (2 * Math.PI * (i+1)) / data.length - Math.PI / 2;
-
+	
     // Night (inner)
     ctx.beginPath();
     ctx.arc(cx, cy, radius - totalThickness/2 + nightThickness/2, angle0, angle1);
@@ -246,6 +246,15 @@ function renderWheel(canvas, data, year) {
     ctx.strokeStyle = "#f59e0b";
     ctx.lineWidth = dayThickness;
     ctx.stroke();
+	
+	const dayDate = new Date(year, 0, i+1);
+	if(dayDate.getDay() == 1) { // Monday
+  	  ctx.beginPath();
+  	  ctx.arc(cx, cy, radius, angle0, angle0+Math.PI/360/2);
+  	  ctx.strokeStyle = "#FFFFFF";
+  	  ctx.lineWidth = totalThickness*0.1;
+  	  ctx.stroke();
+	}
   });
   
   // --- Current day marker ---
@@ -434,7 +443,7 @@ function renderWheel(canvas, data, year) {
     };
 
     const label = [
-      date.toLocaleDateString(undefined, { month: "long", day: "numeric" }),
+      date.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }),
       `Day: ${fmt(dayH)}`,
       `Night: ${fmt(nightH)}`
     ];

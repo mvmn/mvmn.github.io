@@ -396,7 +396,7 @@ Item 3..." class="w-full p-2.5 text-xs border border-slate-300 rounded-lg focus:
         const DEFAULT_ITEMS = [
             "Muted while speaking", "Awkward silence", "Can you see my screen?", "Child/pet appearance", "Sorry I double muted",
             "Loud typing sounds", "Synergy", "Let's take this offline", "Ping me later", "Two people speak at once",
-            "Coffee break", "Out of pocket", "FREE", "Echo on line", "Next slide please",
+            "Coffee break", "Out of pocket", "\u2B50", "Echo on line", "Next slide please",
             "Action items", "Hard stop at top of hour", "Deep dive", "Quick question", "Brainstorming",
             "Heavy breathing on mic", "Is [Name] on the call?", "Bandwidth issue", "Touch base", "Circle back"
         ];
@@ -421,7 +421,7 @@ Item 3..." class="w-full p-2.5 text-xs border border-slate-300 rounded-lg focus:
                 cell.className = "bingo-cell square-cell bg-white rounded-lg p-1.5 sm:p-2 border border-slate-300 flex items-center justify-center text-center font-medium text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:border-indigo-300 transition-all duration-150 cursor-pointer select-text relative";
                 
                 if (isCenter && freeSpaceChecked) {
-                    cell.innerText = "FREE";
+                    cell.innerText = "\u2B50";
                     cell.contentEditable = "false";
                     cell.classList.add('free-space', 'bg-amber-100', 'text-amber-900', 'font-bold', 'border-amber-300');
                 } else {
@@ -538,17 +538,34 @@ Item 3..." class="w-full p-2.5 text-xs border border-slate-300 rounded-lg focus:
         }
 
         /**
-         * Shuffles the grid items randomly
+         * Shuffles the grid items randomly (excluding the center FREE cell if enabled)
          */
         function shuffleGrid() {
             if (isPlayMode) return;
+            const freeSpaceChecked = document.getElementById('toggle-free-space')?.checked ?? true;
             let currentItems = getBingoTextArray();
-            
-            // Fisher-Yates shuffle
-            for (let i = currentItems.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [currentItems[i], currentItems[j]] = [currentItems[j], currentItems[i]];
+
+            if (freeSpaceChecked) {
+                // Remove center cell (Index 12) before shuffle
+                const centerItem = currentItems[12];
+                const pool = [...currentItems.slice(0, 12), ...currentItems.slice(13)];
+
+                // Fisher-Yates shuffle on remaining 24 items
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+
+                // Re-insert center cell at Index 12
+                currentItems = [...pool.slice(0, 12), "\u2B50", ...pool.slice(12)];
+            } else {
+                // Regular shuffle on all 25 items
+                for (let i = currentItems.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [currentItems[i], currentItems[j]] = [currentItems[j], currentItems[i]];
+                }
             }
+
             initGrid(currentItems);
             showToast("Grid shuffled!", "fa-shuffle", "text-indigo-400");
         }

@@ -274,7 +274,25 @@ Item 3..." class="w-full p-2.5 text-xs border border-slate-300 rounded-lg focus:
         let isPlayMode = false;
         const STORAGE_KEY = 'bingo_sheet_grid_items';
 
-        // Compression & Decompression Functions
+        // Base64URL Helpers (URL-safe string variant without +, /, or = padding)
+        function base64ToBase64Url(base64) {
+            return base64
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/, '');
+        }
+
+        function base64UrlToBase64(base64url) {
+            let base64 = base64url
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            return base64;
+        }
+
+        // Compression & Decompression Functions using Base64URL
         async function compressToGzipBase64(text) {
             const bytes = new TextEncoder().encode(text);
             const cs = new CompressionStream('gzip');
@@ -286,15 +304,17 @@ Item 3..." class="w-full p-2.5 text-xs border border-slate-300 rounded-lg focus:
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     const base64 = reader.result.split(',')[1];
-                    resolve(base64);
+                    const base64url = base64ToBase64Url(base64);
+                    resolve(base64url);
                 };
                 reader.onerror = reject;
                 reader.readAsDataURL(blob);
             });
         }
 
-        async function decompressFromGzipBase64(base64String) {
-            const binaryString = atob(base64String);
+        async function decompressFromGzipBase64(base64UrlString) {
+            const base64 = base64UrlToBase64(base64UrlString);
+            const binaryString = atob(base64);
             const bytes = Uint8Array.from(binaryString, char => char.charCodeAt(0));
             const ds = new DecompressionStream('gzip');
             const writer = ds.writable.getWriter();

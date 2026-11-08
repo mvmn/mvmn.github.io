@@ -124,9 +124,11 @@
 			textarea {
 				width: 100%;
 				min-height: 8em;
+				margin-bottom: 4px;
+				border: dotted 1px grey;
 			}
 			
-			input, textarea {
+			input {
 				border: dotted 1px grey;
 			}
 			
@@ -192,10 +194,6 @@
 	        .hidden {
 	            display: none;
 	        }
-			
-			textarea {
-				margin-bottom: 4px;
-			}
 		</style>
 		<script>
 			window.eventHandlers = {};
@@ -257,10 +255,6 @@
 	                	this.circle.setAttribute("width", "8");
 					}
 	                this.circle.setAttribute("fill", "none");
-					
-					if (this.text) {
-						this.setText(this.text);					
-					}
         
 	                this.line1 = this.createLine(1, 7, 7, 1);
 	                this.line2 = this.createLine(1, 1, 7, 7);
@@ -280,25 +274,31 @@
         
 	                this.svg.append(this.circle, this.line1, this.line2, this.line3, this.filledCircle);
 	                this.container.appendChild(this.svg);
+
+					if (this.text) {
+						this.setText(this.text);					
+					}
 				}
 				
 				setText(text) {
 					this.text = text;
-					if (text.length > 3) {
+					if (text && text.length > 3) {
 						text = text.substring(0, 3);
 					}
-					// Create text element
-				    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
-				    textElem.setAttribute("x", text.length > 2 ? "0" : text.length > 1 ? "1" : "2");
-				    textElem.setAttribute("y", "6");
-				    textElem.setAttribute("font-size", text.length > 2 ? "4" : "5");
-				    textElem.setAttribute("font-family", "monospace");
-				    textElem.setAttribute("fill", "white");
-				    textElem.textContent = text;
-
+					
+					// Completely remove old SVG text nodes to prevent overlapping
 					this.svg.querySelectorAll('text').forEach(textEl => textEl.remove());
-				    // Append text to SVG
-				    this.svg.appendChild(textElem);					
+
+					if (text) {
+					    const textElem = document.createElementNS("http://www.w3.org/2000/svg", "text");
+					    textElem.setAttribute("x", text.length > 2 ? "0.5" : text.length > 1 ? "1.5" : "2.5");
+					    textElem.setAttribute("y", "6");
+					    textElem.setAttribute("font-size", text.length > 2 ? "3.5" : "4.5");
+					    textElem.setAttribute("font-family", "monospace");
+					    textElem.setAttribute("fill", "white");
+					    textElem.textContent = text;
+					    this.svg.appendChild(textElem);
+					}					
 				}
 
 	            createLine(x1, y1, x2, y2) {
@@ -410,7 +410,6 @@
 			}
 			
 			templates['circle5'] = function(attrs) {
-				
 				var result = [`<span id="attr_${attrs.id}_vals" fivestate="${!!attrs.fivestate}">`];
 				for(var i=1; i<=5; i++) {
 					if (attrs.valmul) {
@@ -420,7 +419,6 @@
 						result.push(`<span class="circle"></span>`);
 					}
 				}				
-				
 				return result.join("");
 			}
 			
@@ -433,7 +431,6 @@
 				if(attrs.attrs) {
 					extraAttrs.push(...attrs.attrs.split(';;').map(part => part.replace(/^([^=]+)=(.*)$/, '$1="$2"')));
 				}
-				
 				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <input id="prop_${attrs.id}" type="${attrs.type? attrs.type : 'text'}" class="charprop" ${extraAttrs.join(' ')} /></div>`;
 			}
 			
@@ -445,7 +442,6 @@
 					optionsHTMLs.push(`<option value="${option}">${option}</option>`);
 				}
 				var optionsHTML = optionsHTMLs.join("\n");
-				
 				return `<div class="propdiv"><label class="proplabel" for="prop_${attrs.id}">${attrs.name}:</label> <select id="prop_${attrs.id}" class="charprop">${optionsHTML}</select>&nbsp;<button onclick="addval('prop_${attrs.id}')">+</button></div>`;
 			}
 			
@@ -550,7 +546,8 @@
 				for(var i = 0; i < msSquares.length; i++) {
 					var elem = msSquares[i];
 					var lsKey = getMultiSelectKey(elem);
-					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => { 						var msKey = getMultiSelectKey(elem.parentElement);
+					var ms = new MultistateCheck(elem, $(elem).parent().attr('fivestate') == 'true', false, (elem, state) => { 						
+						var msKey = getMultiSelectKey(elem.parentElement);
 						localStorage.setItem(msKey, state);
 						fireEvent("inputchange", {
 							"type": $(elem).parent().attr('fivestate') == 'true' ? 'fivestate' : 'prop',
@@ -560,7 +557,6 @@
 							"subelement": elem,
 							"id": $(elem).parent().parent().attr('id')
 						});
-						
 					}, localStorage.getItem(lsKey), $(elem).attr('text'));
 					multiselects[lsKey] = ms;
 				}
@@ -666,6 +662,7 @@
 					savedSelectedIndex = parseInt(savedSelectedIndex);
 					window.currentChar = savedSelectedIndex;
 				}
+				
 				var charStashIndex = 1;
 				do {
 					stashedChar = localStorage.getItem("charstash_"+(charStashIndex++));
@@ -677,6 +674,11 @@
 						}));
 					}
 				} while (stashedChar);
+
+				// Initialize stash slot 0 if non-existent
+				if (!localStorage.getItem("charstash_0")) {
+					localStorage.setItem("charstash_0", JSON.stringify(saveChar()));
+				}
 				
 				// Import
 				$("#fileInput").on("change", event => {
@@ -733,22 +735,26 @@
 					fireEvent('newchar');
 				});
 				
+				// Correct slot index handling when switching character sheets
 				$("#characterSelector").on("change", () => {
-					var selectedValue = $("#characterSelector option:selected" ).val();
+					var newSelectedValue = $("#characterSelector option:selected").val();
 					localStorage.setItem("charstash_" + window.currentChar, JSON.stringify(saveChar()));
-					var stashedChar = localStorage.getItem("charstash_" + selectedValue);
+					
+					var stashedChar = localStorage.getItem("charstash_" + newSelectedValue);
 					clearChar();
 					if (stashedChar) {
 						loadChar(stashedChar);
 					}
-					window.currentChar = selectedValue;
+					window.currentChar = parseInt(newSelectedValue);
 					localStorage.setItem('currentChar', window.currentChar);
 					fireEvent('newchar');
 				});
 				
+				// Prevent deleting last character slot
 				$("#btn_char_delete").on("click", () => {
 					var totalChars = $("#characterSelector option").length;
-					if (totalChars == 1) {
+					if (totalChars <= 1) {
+						alert("Cannot delete the last remaining character sheet.");
 						return;
 					}
 					if (window.confirm("Are you sure?")) {
@@ -758,7 +764,7 @@
 						}
 						localStorage.removeItem("charstash_" + (totalChars-1));
 						$("#characterSelector option:last").remove();
-						var newSelectedValue = parseInt(selectedValue) - 1;
+						var newSelectedValue = Math.max(0, parseInt(selectedValue) - 1);
 						$('#characterSelector option').eq(newSelectedValue).prop('selected', true);
 						window.currentChar = newSelectedValue;
 						localStorage.setItem('currentChar', window.currentChar);
@@ -812,7 +818,9 @@
 					}
 				}
 				for (var i=0; i<values.length; i++) {
-					multiselects["MSProp_attr_dis"+disciplineIndex+"_vals#"+i].setText(values[i]);
+					if (multiselects["MSProp_attr_dis"+disciplineIndex+"_vals#"+i]) {
+						multiselects["MSProp_attr_dis"+disciplineIndex+"_vals#"+i].setText(values[i]);
+					}
 				}
 			}
 			
@@ -823,7 +831,7 @@
 				}
 			});
 			regHandler('inputchange', function(data) {
-				if(data.id.startsWith('attr_dis')) {
+				if(data.id && data.id.startsWith('attr_dis')) {
 					updateDisciplinePrices();
 				}
 			});
@@ -835,7 +843,7 @@
 			  <h1>Vampire: ☥he Masquerade v5 -- 𝔠𝔥𝔞𝔯𝔞𝔠𝔱𝔢𝔯 𝔰𝔥𝔢𝔢𝔱</h1>
 		  </div>
  		  <div class="column rightalign">
-			  <div><span id="theme-toggle" data-i18n="theme_toggle">☀️</span></div>
+			  <div><span id="theme-toggle" data-i18n="theme_toggle" style="cursor: pointer;">☀️</span></div>
 			  <div>
 				  <button id="btn_clear">Clear</button>
 				  <button id="btn_export">Export</button>
